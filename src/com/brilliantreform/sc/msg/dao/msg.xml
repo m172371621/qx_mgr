@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="community">
+
+	<typeAlias alias="community" type="com.brilliantreform.sc.community.po.Community" />
+	
+	<select id="getCommunityInfo" resultClass="community" parameterClass="int">
+		select t1.communityId as community_id,
+			   t1.communityName as community_name,
+			   t1.communityAddr as community_addr,
+			   t1.communityDesc as community_Dec,
+			   t1.propertyId as property_id,
+			   t2.propertyName as community_property,
+			   t2.propertyDesc as property_Dec			
+		from community_base t1,property_base t2
+		where t1.communityId = #id# and t1.propertyId = t2.propertyId limit 1;
+	</select>
+	
+	<select id="getCommunityList" resultClass="community">
+		select t1.communityId as community_id,
+			   t1.communityName as community_name,
+			   t1.communityAddr as community_addr,
+			   t1.communityDesc as community_Dec,
+			   t1.propertyId as property_id,
+			   t2.propertyName as community_property,
+			   t2.propertyDesc as property_Dec		
+		from community_base t1,property_base t2
+		where t1.propertyId = t2.propertyId ;
+	</select>
+    
+</sqlMap>

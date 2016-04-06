@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="ehcache.xsd">
+
+    <cache name="commonCache"
+           eternal="true"
+           maxElementsInMemory="10000"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="LRU" />
+
+    <!-- 数据字典 缓存配置 -->
+    <cache name="dictCache"
+           eternal="true"
+           maxElementsInMemory="10000"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="LRU" />
+
+    <!-- 系统参数 缓存配置 -->
+    <cache name="settingCache"
+           eternal="true"
+           maxElementsInMemory="10000"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="LRU" />
+
+    <!-- 商品类别 缓存配置 -->
+    <cache name="productServiceCache"
+           eternal="true"
+           maxElementsInMemory="10000"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="LRU" />
+</ehcache>

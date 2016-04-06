@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="sysmenu">
+
+    <typeAlias alias="sysMenu" type="com.brilliantreform.sc.sys.po.SysMenu"/>
+
+    <select id="findAllMenu" resultClass="sysMenu" parameterClass="int">
+        SELECT t.* FROM sys_menu t WHERE t.removetag = 0
+        <isNotEmpty prepend="and" property="value">
+            t.type = #value#
+        </isNotEmpty>
+        ORDER BY t.parentid, t.type, t.sort
+    </select>
+
+    <select id="findUserMenu" resultClass="sysMenu" parameterClass="hashmap">
+        select DISTINCT t2.* from mgr_role_right t1, sys_menu t2
+        where t1.right_id = t2.objid and t2.removetag = 0
+        <isNotEmpty prepend="and" property="type">
+            t2.type = #type#
+        </isNotEmpty>
+        and EXISTS (select 1 from mgr_user_role t3 where t1.role_id = t3.role_id and t3.user_id = #user_id#)
+        ORDER BY t2.parentid, t2.type, t2.sort
+    </select>
+</sqlMap>

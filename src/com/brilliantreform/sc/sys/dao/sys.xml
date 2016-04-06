@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="sys">
+
+    <typeAlias alias="sysMenu" type="com.brilliantreform.sc.sys.po.SysMenu"/>
+    <typeAlias alias="sysSetting" type="com.brilliantreform.sc.sys.po.SysSetting"/>
+    <typeAlias alias="sysDict" type="com.brilliantreform.sc.sys.po.SysDict"/>
+    <typeAlias alias="sysJob" type="com.brilliantreform.sc.sys.po.SysJob"/>
+    <typeAlias alias="communityConfig" type="com.brilliantreform.sc.confgure.po.Config_community"/>
+
+    <typeAlias alias="sysInbox" type="com.brilliantreform.sc.sys.po.SysInbox"/>
+    <typeAlias alias="sysMsgTemplate" type="com.brilliantreform.sc.sys.po.SysMsgTemplate"/>
+    <typeAlias alias="sysSendDetail" type="com.brilliantreform.sc.sys.po.SysSendDetail"/>
+    <typeAlias alias="sysSendQueue" type="com.brilliantreform.sc.sys.po.SysSendQueue"/>
+
+    <select id="findAllSetting" resultClass="sysSetting">
+		SELECT t1.* FROM sys_setting t1 ORDER BY t1.module, t1.name
+	</select>
+
+    <select id="getSettingById" parameterClass="int" resultClass="sysSetting">
+        SELECT * FROM sys_setting WHERE objid = #objid#
+    </select>
+
+    <insert id="insertSetting" parameterClass="sysSetting">
+        INSERT INTO sys_setting
+        (module, name, value, remark)
+        VALUES
+        (#module#, #name#, #value#, #remark#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <delete id="deleteSetting" parameterClass="int">
+        DELETE FROM sys_setting WHERE objid = #objid#
+    </delete>
+
+    <update id="updateSetting" parameterClass="sysSetting">
+        UPDATE sys_setting SET
+        module = #module#,
+        name = #name#,
+        value = #value#,
+        remark = #remark#
+        WHERE objid = #objid#
+    </update>
+
+    <select id="findAllDict" resultClass="sysDict">
+		SELECT t1.* FROM sys_dict t1 ORDER BY t1.module, t1.type, t1.sort
+	</select>
+
+    <select id="findDictModule" resultClass="String">
+        SELECT DISTINCT module FROM sys_dict
+    </select>
+
+    <sql id="searchCommunityConfig_sql">
+        FROM config_community t1, community_base t2
+        WHERE t1.community_id = t2.communityid
+        <isNotEmpty property="community_list" prepend="and">
+            t1.community_id in
+            <iterate close=")" open="(" conjunction="," property="community_list">
+                <![CDATA[ #community_list[]# ]]>
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="config_id" prepend="and">
+            t1.config_id LIKE '%$config_id$%'
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchCommunityConfig" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.communityname AS community_name
+        <include refid="searchCommunityConfig_sql"/>
+        ORDER BY t1.community_id, t1.config_id
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchCommunityConfigCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchCommunityConfig_sql"/>
+    </select>
+    
+    <select id="getCommunityConfigById" parameterClass="hashmap" resultClass="communityConfig">
+        SELECT * FROM config_community WHERE config_id = #config_id# AND community_id = #community_id#
+    </select>
+
+    <insert id="insertCommunityConfig" parameterClass="communityConfig">
+        INSERT INTO config_community
+        (config_id, config_value, config_dec, community_id, config_ext1, config_ext2, config_ext3, createTime)
+        VALUES
+        (#config_id#, #config_value#, #config_dec#, #community_id#, #config_ext1#, #config_ext2#, #config_ext3#, #createTime#)
+    </insert>
+
+    <update id="updateCommunityConfig" parameterClass="hashmap">
+        UPDATE config_community SET
+        config_id = #config_id#,
+        config_value = #config_value#,
+        config_dec = #config_dec#,
+        community_id = #community_id#,
+        config_ext1 = #config_ext1#,
+        config_ext2 = #config_ext2#,
+        config_ext3 = #config_ext3#,
+        createTime = #createTime#
+        WHERE
+        config_id = #config_id_old# AND community_id = #community_id_old#
+    </update>
+
+    <delete id="removeCommunityConfig" parameterClass="hashmap">
+        delete from config_community  where config_id = #config_id# and community_id = #community_id#
+    </delete>
+
+    <sql id="searchSetting_sql">
+        FROM sys_setting
+        <dynamic prepend="where">
+            <isNotEmpty property="module" prepend="and">
+                module = #module#
+            </isNotEmpty>
+            <isNotEmpty property="name" prepend="and">
+                name LIKE CONCAT('%', #name#, '%')
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+    
+    <select id="searchSetting" parameterClass="hashmap" resultClass="hashmap">
+        SELECT *
+        <include refid="searchSetting_sql"/>
+        ORDER BY module, name
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchSettingCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchSetting_sql"/>
+    </select>
+
+    <select id="findSettingModules" resultClass="string">
+        SELECT DISTINCT module FROM sys_setting
+    </select>
+
+    <select id="findMenuTree" resultClass="hashmap" parameterClass="hashmap">
+        SELECT objid, name, parentid, type, sort
+        FROM sys_menu WHERE removetag = 0
+        <isNotEmpty property="parentid" prepend="and">
+            parentid = #parentid#
+        </isNotEmpty>
+        <isNotEmpty property="type" prepend="and">
+            type = #type#
+        </isNotEmpty>
+        ORDER BY parentid, type, sort
+    </select>
+
+    <sql id="searchMenu_sql">
+        FROM sys_menu
+        WHERE removetag = 0
+        <isNotEmpty property="parentid" prepend="and">
+            parentid = #parentid#
+        </isNotEmpty>
+        <isNotEmpty property="type" prepend="and">
+            type = #type#
+        </isNotEmpty>
+        <isNotEmpty property="name" prepend="and">
+            name LIKE concat('%', #name#, '%')
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchMenu" parameterClass="hashmap" resultClass="hashmap">
+        SELECT *
+        <include refid="searchMenu_sql"/>
+        ORDER BY parentid, type, sort
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchMenuCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchMenu_sql"/>
+    </select>
+
+    <select id="getMenuById" resultClass="sysMenu" parameterClass="int">
+        SELECT * FROM sys_menu WHERE objid = #objid#
+    </select>
+
+    <select id="getMaxMenuSort" parameterClass="int" resultClass="int">
+        SELECT MAX(sort) FROM sys_menu WHERE parentid = #parentid#
+    </select>
+
+    <insert id="insertMenu" parameterClass="sysMenu">
+        INSERT INTO sys_menu
+        (name, logo, parentid, type, sort, url, remark, removetag)
+        VALUES
+        (#name#, #logo#, #parentid#, #type#, #sort#, #url#, #remark#, #removetag#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateMenu" parameterClass="sysMenu">
+        UPDATE sys_menu SET
+        name = #name#,
+        logo = #logo#,
+        parentid = #parentid#,
+        type = #type#,
+        sort = #sort#,
+        url = #url#,
+        remark = #remark#,
+        removetag = #removetag#
+        WHERE objid = #objid#
+    </update>
+
+    <delete id="removeMenu" parameterClass="int">
+        UPDATE sys_menu SET removetag = 1 WHERE objid = #objid#
+    </delete>
+
+    <select id="getJobById" parameterClass="int" resultClass="sysJob">
+        SELECT * FROM sys_job WHERE objid = #objid#
+    </select>
+
+    <insert id="insertJob" parameterClass="sysJob">
+        INSERT INTO sys_job
+        (name, cronExpression, isSync, beanId, clazz, method, remark, status)
+        VALUES
+        (#name#, #cronExpression#, #isSync#, #beanId#, #clazz#, #method#, #remark#, #status#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateJob" parameterClass="sysjob">
+        UPDATE sys_job SET
+        name = #name#,
+        cronExpression = #cronExpression#,
+        isSync = #isSync#,
+        beanId = #beanId#,
+        clazz = #clazz#,
+        method = #method#,
+        remark = #remark#,
+        status = #status#
+        WHERE
+        objid = #objid#
+    </update>
+
+    <delete id="removeJob" parameterClass="int">
+        DELETE FROM sys_job WHERE objid = #objid#
+    </delete>
+    
+    <select id="findSendQueueByStatus" parameterClass="int" resultClass="sysSendQueue">
+        SELECT t1.* FROM sys_send_queue t1 WHERE t1.removetag = 0
+        <isNotEmpty prepend="and" property="status">
+            t1.status = #value#
+        </isNotEmpty>
+    </select>
+    
+    <insert id="insertSysSendQueue" parameterClass="sysSendQueue">
+        INSERT INTO sys_send_queue
+        (template_id, title, content, status, type, sender_id, create_time, send_time, removetag)
+        VALUES
+        (#template_id#, #title#, #content#, #status#, #type#, #sender_id#, #create_time#, #send_time#, #removetag#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateSysSendQueue" parameterClass="sysSendQueue">
+        UPDATE sys_send_queue SET
+        template_id = #template_id#,
+        title = #title#,
+        content = #content#,
+        status = #status#,
+        type = #type#,
+        sender_id = #sender_id#,
+        create_time = #create_time#,
+        send_time = #send_time#,
+        removetag = #removetag#
+        WHERE objid = #objid#
+    </update>
+
+    <select id="findSendDetail" parameterClass="hashmap" resultClass="sysSendDetail">
+        SELECT * FROM sys_send_detail WHERE removetag = 0 AND queue_id = #queue_id#
+        <isNotEmpty property="status" prepend="and">
+            status = #status#
+        </isNotEmpty>
+    </select>
+
+    <select id="getMsgTemplateByCode" parameterClass="string" resultClass="sysMsgTemplate">
+        SELECT * FROM sys_msg_template WHERE template_code = #value#
+    </select>
+</sqlMap>

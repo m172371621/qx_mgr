@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="dicti">
+
+	<typeAlias alias="Dicti" type="com.brilliantreform.sc.system.dicti.po.DictiVo" />
+
+	
+	<select id="getDictiType" resultClass="Dicti"  >
+		select 
+			id,name
+		from 
+			dicti_type		
+	</select>
+	
+	<select id="getDictiValue" resultClass="Dicti" parameterClass="int" >
+		select 
+			name,value
+		from 
+			dicti_value	
+		where 
+			type_id = #type_id#  
+		order by 
+			i_order desc 
+	</select>
+	
+	
+</sqlMap>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="statistics">
+
+	
+	<select id="countRegist" resultClass="hashmap" parameterClass="map">
+		select 
+			count(0) as count,t3.communityName as cid	
+		from 
+			user_login t1,user_baseinfo t2,community_base t3
+		where 
+			t1.userid = t2.userid
+			and t2.communityid = t3.communityid
+			<dynamic>
+			<isNotNull property="cid" prepend="and">
+				t2.communityid = #cid#
+			</isNotNull>
+			<isNotNull property="start_time" prepend="and">
+				t1.createtime <![CDATA[>=]]> #start_time#
+			</isNotNull>
+			<isNotNull property="end_time" prepend="and">
+				t1.createtime <![CDATA[<=]]> #end_time#
+			</isNotNull>
+			</dynamic>
+		group by 
+			t2.communityid
+	</select>
+    
+</sqlMap>

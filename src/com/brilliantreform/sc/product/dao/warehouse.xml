@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="warehouse">
+
+	<typeAlias alias="product" type="com.brilliantreform.sc.product.po.Product" />
+    <typeAlias alias="service" type="com.brilliantreform.sc.service.po.ServiceVo" />
+    <typeAlias alias="totalProduct" type="com.brilliantreform.sc.stock.po.TotalProduct" />
+    <typeAlias alias="totalService" type="com.brilliantreform.sc.stock.po.TotalService" />
+
+    <typeAlias alias="productDBTemp" type="com.brilliantreform.sc.product.po.ProductDBTemp" />
+    <typeAlias alias="productDBHeader" type="com.brilliantreform.sc.product.po.ProductDBHeader" />
+    <typeAlias alias="productDBDetail" type="com.brilliantreform.sc.product.po.ProductDBDetail" />
+
+    <typeAlias alias="productRealStock" type="com.brilliantreform.sc.incomming.po.ProductRealStockBean"/>
+    <typeAlias alias="productBatchStock" type="com.brilliantreform.sc.incomming.po.ProductBatchStockBean"/>
+
+    <select id="getTotalServiceTree" resultClass="hashmap">
+        SELECT CONCAT('s_', t1.service_id) as id, CONCAT('s_', t1.parent_id) as pId, t1.service_name as name, 1 as is_total, t1.*
+        FROM inventory_classification t1
+        WHERE t1.status = 1
+    </select>
+
+    <select id="getTotalProductTree" parameterClass="int" resultClass="hashmap">
+        SELECT CONCAT('p_', t1.product_id) as id, CONCAT('s_', t1.service_id) as pId, 1 as is_total, #value# as community_id, t1.*, t2.*
+        FROM service_product_sum t1
+        LEFT JOIN product_real_stock t2 ON t1.product_id = t2.product_id AND t2.community_id = #value#
+        WHERE t1.status = 1
+    </select>
+
+    <select id="getServiceTree" parameterClass="hashmap" resultClass="hashmap">
+        SELECT CONCAT('s_', t1.service_id) as id, CONCAT('s_', t1.parent_id) as pId, t1.service_name as name, 0 as is_total, t1.*
+        FROM service_base t1
+        WHERE t1.status = 1 AND t1.community_id = #community_id#
+    </select>
+
+    <select id="getProductTree" parameterClass="hashmap" resultClass="hashmap">
+        SELECT CONCAT('p_', t1.product_id) as id, CONCAT('s_', t1.service_id) as pId, 0 as is_total, t1.*, t2.*
+        FROM service_product t1
+        LEFT JOIN product_real_stock t2 ON t1.product_id = t2.product_id AND t2.community_id = t1.community_id
+        WHERE t1.status = 1 AND t1.community_id = #community_id#
+    </select>
+
+    <select id="getTotalProductById" parameterClass="hashmap" resultClass="hashmap">
+        SELECT #community_id# as community_id, t3.communityname as community_name, t1.*, t2.*
+        FROM service_product_sum t1
+        INNER JOIN community_base t3 ON t3.communityid = #community_id#
+        LEFT JOIN product_real_stock t2 ON t1.product_id = t2.product_id AND t2.community_id = #community_id#
+        WHERE t1.product_id = #product_id#
+    </select>
+
+    <select id="getProductById" parameterClass="int" resultClass="hashmap">
+        SELECT t1.*, t2.*, t3.communityname as community_name
+        FROM service_product t1
+        INNER JOIN community_base t3 ON t1.community_id = t3.communityid
+        LEFT JOIN product_real_stock t2 ON t1.product_id = t2.product_id AND t2.community_id = t1.community_id
+        WHERE t1.product_id = #value#
+    </select>
+    
+    <insert id="insertProductDBTemp" parameterClass="productDBTemp">
+        INSERT INTO product_db_temp
+        (community_id, user_id, product_id, is_total, amount, create_time)
+        VALUES
+        (#community_id#, #user_id#, #product_id#, #is_total#, #amount#, #create_time#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateProductDBTemp" parameterClass="productDBTemp">
+        UPDATE product_db_temp SET
+        community_id = #community_id#,
+        user_id = #user_id#,
+        product_id = #product_id#,
+        is_total = #is_total#,
+        amount = #amount#,
+        create_time = #create_time#
+        WHERE objid = #objid#
+    </update>
+    
+    <select id="getProductDBTempInfo" parameterClass="hashmap" resultClass="productDBTemp">
+        SELECT * FROM product_db_temp WHERE community_id = #community_id# AND user_id = #user_id# AND product_id = #product_id#
+    </select>
+
+    <select id="findUserProductDBTemp" parameterClass="int" resultClass="productDBTemp">
+        SELECT * FROM product_db_temp WHERE user_id = #user_id#
+    </select>
+
+    <delete id="deleteUserProductDBTemp" parameterClass="int">
+        DELETE FROM product_db_temp WHERE user_id = #user_id#
+    </delete>
+
+    <select id="findDBTempCommunity" parameterClass="int" resultClass="int">
+        SELECT DISTINCT community_id FROM product_db_temp WHERE user_id = #user_id#
+    </select>
+    
+    <select id="getProductCountInDBTemp" parameterClass="hashmap" resultClass="double">
+        SELECT sum(amount) FROM product_db_temp WHERE community_id = #community_id# AND product_id = #product_id#
+    </select>
+
+    <select id="searchTotalProductByKeyword" parameterClass="hashmap" resultClass="java.util.LinkedHashMap">
+        SELECT t1.*, IFNULL(t2.pre_incomming_price, '') as pre_incomming_price, t2.*
+        FROM service_product_sum t1
+        LEFT JOIN product_real_stock t2 ON t1.product_id = t2.product_id AND t2.community_id = #community_id#
+        WHERE (t1.name LIKE CONCAT('%', #keyword#, '%') OR t1.barcode LIKE CONCAT('%', #keyword#, '%'))
+    </select>
+
+    <select id="getProductRealStock" parameterClass="hashmap" resultClass="productRealStock">
+        select * from product_real_stock where product_id = #product_id# and community_id = #community_id#
+    </select>
+
+    <update id="updateProductRealStock" parameterClass="productRealStock">
+        update product_real_stock set
+        real_stock_sum = #real_stock_sum#,
+        pre_incomming_price = #pre_incomming_price#,
+        create_time = #create_time#
+        where product_id = #product_id# and community_id = #community_id#
+    </update>
+    
+    <insert id="insertProductRealStock" parameterClass="productRealStock">
+        INSERT INTO product_real_stock
+        (product_id, community_id, real_stock_sum, pre_incomming_price, create_time)
+        VALUES
+        (#product_id#, #community_id#, #real_stock_sum#, #pre_incomming_price#, #create_time#)
+    </insert>
+    
+    <select id="findProductBatchStock" parameterClass="hashmap" resultClass="productBatchStock">
+        SELECT * FROM product_batch_stock WHERE community_id= #community_id# AND product_id = #product_id# AND order_current_sum > 0
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="getTotalServiceById" parameterClass="int" resultClass="totalService">
+        SELECT * FROM inventory_classification WHERE service_id = #value#
+    </select>
+
+    <insert id="insertProductDBHeader" parameterClass="productDBHeader">
+        INSERT INTO product_db_header
+        (from_cid, to_cid, header_no, user_id, create_time, is_total, status, operator, operate_time, remark, removetag)
+        VALUES
+        (#from_cid#, #to_cid#, #header_no#, #user_id#, #create_time#, #is_total#, #status#, #operator#, #operate_time#, #remark#, #removetag#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateProductDBHeader" parameterClass="productDBHeader">
+        UPDATE product_db_header SET
+        from_cid = #from_cid#,
+        to_cid = #to_cid#,
+        header_no = #header_no#,
+        user_id = #user_id#,
+        create_time = #create_time#,
+        is_total = #is_total#,
+        status = #status#,
+        operator = #operator#,
+        operate_time = #operate_time#,
+        remark = #remark#,
+        removetag = #removetag#
+        WHERE objid = #objid#
+    </update>
+
+    <insert id="insertProductDBDetail" parameterClass="productDBDetail">
+        INSERT INTO product_db_detail
+        (header_id, batch_serial, product_id, is_total, unit_price, change_count, pre_stock_count, remark, removetag)
+        VALUES
+        (#header_id#, #batch_serial#, #product_id#, #is_total#, #unit_price#, #change_count#, #pre_stock_count#, #remark#, #removetag#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateProductDBDetail" parameterClass="productDBDetail">
+        UPDATE product_db_detail SET
+        header_id = #header_id#,
+        batch_serial = #batch_serial#,
+        product_id = #product_id#,
+        is_total = #is_total#,
+        unit_price = #unit_price#,
+        change_count = #change_count#,
+        pre_stock_count = #pre_stock_count#,
+        remark = #remark#,
+        removetag = #removetag#
+        WHERE objid = #objid#
+    </update>
+    
+    <delete id="deleteProductDBTemp" parameterClass="int">
+        DELETE FROM product_db_temp WHERE objid = #objid#
+    </delete>
+
+    <sql id="searchDBHeader_sql">
+        FROM product_db_header t1
+        INNER JOIN community_base t2 ON t1.from_cid = t2.communityid
+        INNER JOIN community_base t3 ON t1.to_cid = t3.communityid
+        INNER JOIN mgr_user t4 ON t1.user_id = t4.user_id
+        LEFT JOIN mgr_user t5 ON t1.operator = t5.user_id
+        WHERE t1.removetag = 0
+        <isNotEmpty property="from_cid" prepend="and">
+            t1.from_cid = #from_cid#
+        </isNotEmpty>
+        <isNotEmpty property="to_cid" prepend="and">
+            t1.to_cid = #to_cid#
+        </isNotEmpty>
+        <isNotEmpty property="header_no" prepend="and">
+            t1.header_no LIKE CONTACT('%', #header_no#, '%');
+        </isNotEmpty>
+        <isNotEmpty property="status" prepend="and">
+            t1.status = #status#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchDBHeader" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.communityname as from_cname, t3.communityname as to_cname, t4.loginname as user_name, t5.loginname as operator_name
+        <include refid="searchDBHeader_sql"/>
+        ORDER BY t1.create_time DESC
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchDBHeaderCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchDBHeader_sql"/>
+    </select>
+
+    <sql id="searchDBDetail_sql">
+        FROM product_db_detail t1
+        INNER JOIN service_product t2 ON t1.product_id = t2.product_id
+        WHERE t1.removetag = 0
+        <isNotEmpty property="header_id" prepend="and">
+            t1.header_id = #header_id#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchDBDetail" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.name as product_name
+        <include refid="searchDBDetail_sql"/>
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchDBDetailCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchDBDetail_sql"/>
+    </select>
+
+    <sql id="searchTotalDBDetail_sql">
+        FROM product_db_detail t1
+        INNER JOIN service_product_sum t2 ON t1.product_id = t2.product_id
+        WHERE t1.removetag = 0
+        <isNotEmpty property="header_id" prepend="and">
+            t1.header_id = #header_id#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchTotalDBDetail" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.name as product_name
+        <include refid="searchTotalDBDetail_sql"/>
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchTotalDBDetailCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchTotalDBDetail_sql"/>
+    </select>
+
+    <select id="getDBHeaderById" resultClass="productDBHeader" parameterClass="int">
+        SELECT * FROM product_db_header WHERE objid = #objid#
+    </select>
+</sqlMap>

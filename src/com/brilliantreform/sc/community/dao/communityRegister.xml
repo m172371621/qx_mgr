@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="communityRegister">
+
+	<typeAlias alias="Community_register" type="com.brilliantreform.sc.community.po.Community_register" />
+	
+	<select id="queryRegisterList" resultClass="Community_register" parameterClass="java.util.Map">
+	        SELECT * FROM community_register
+	        WHERE 1=1
+	        <isNotNull property="community_register_id" open="AND">
+	           community_register_status=#community_register_status#
+	        </isNotNull>
+            LIMIT #start#,#size#
+	</select>
+	
+    <select id="queryRegisterCount" resultClass="java.lang.Integer" parameterClass="java.util.Map">
+            SELECT COUNT(*) FROM community_register
+            <isNotNull property="community_register_id" open="AND">
+	           community_register_status=#community_register_status#
+	        </isNotNull>
+    </select>
+    
+    <select id="queryRegisterDetail" resultClass="Community_register" parameterClass="java.util.Map">
+         SELECT * FROM community_register
+         WHERE community_register_id=#community_register_id#
+    </select>
+    <insert id="register" parameterClass="community_register">
+         INSERT INTO community_register(community_name,community_addr,community_person_phone,community_person_name,community_person_addr)
+         VALUES(#community_name#,#community_addr#,#community_person_phone#,#community_person_name#,#community_person_addr#)
+         <selectKey resultClass="int" keyProperty="community_register_id">
+            SELECT LAST_INSERT_ID()  
+         </selectKey>
+    </insert>
+    <update id="auditRegister" parameterClass="Community_register">
+         UPDATE community_register
+         SET community_name=#community_name#
+         ,community_register_status=#community_register_status#
+         WHERE community_register_id=#community_register_id#   
+    </update>
+</sqlMap>

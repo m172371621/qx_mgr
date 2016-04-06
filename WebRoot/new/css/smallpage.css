@@ -1,0 +1,95 @@
+@charset "UTF-8";
+/* CSS Document */
+*{margin: 0;padding: 0;list-style: none; box-sizing: border-box;-webkit-tap-highlight-color: rgba(0,0,0,0); font-family: "Microsoft YaHei";}
+code, kbd, pre, samp { font-family: courier new, courier, monospace; } /* 统一等宽字体 */
+
+html{ font-size:1em; height:100%;}
+small { font-size: 12px; } /* 小于 12px 的中文很难阅读，让 small 正常化 */
+img{ max-width:100%; height:auto; outline:none; border:none;}
+a { text-decoration: none;outline: none; }
+a:hover { text-decoration: none; }
+body{ max-width:640px; margin:0 auto; width:100%; overflow-x:hidden; overflow-y:visible; /*background-color:#f1f2f4;*/  } 
+
+  /*给最大的容器DIV常用的这个属性*/
+.first_part{ width:100%; background-color:#ffffff; overflow:hidden; height:90px;}
+.title a{ font-family: "Microsoft YaHei"; font-size:1.2em;
+  color: #333333;
+}
+.title{ margin-top:3%; margin-left:1%;}
+.price{ margin-left:2%;}
+.left_part span a{ font-family: "MicrosoftYaHei";
+  color: rgb(249, 91, 77);
+  font-weight: bold; font-size:2em;
+}
+.origin{ font-family: "JZongDengXian";
+  color: rgb(174, 174, 174);
+  text-decoration: line-through; font-size:1.2em; padding-left:5%;
+}
+.rmb{ font-family: "JZongDengXian";
+  color: rgb(249, 91, 77);
+}
+ .left_part{  float: left;
+    width: 75%;
+    height: 30px;
+    line-height: 30px;
+    margin-top: 10px;}
+.twenty{ float:right;  margin-right:2%; margin-top:15px;}
+.twenty span{  font-family: "Microsoft YaHei"; font-size:0.9em;
+  color: rgb(174, 174, 174);}
+.gray{ width:100%; background-color:#f1f2f4; height:5px;}
+.main{ width:100%; background-color:#ffffff; overflow:hidden;}
+.first{ width:96%; height:60px;line-height: 60px;margin:0 2%; overflow:hidden; border-bottom: 1px solid #e8e8e8; }
+.my_ma{ float:left;   }
+.my_ma span{  font-family: "Microsoft YaHei"; font-size:1.1em;
+  color: rgb(60, 60, 60);
+}
+.click{ float:right;  text-align: right;color: rgb(103, 175, 221);}
+.click_two a{ font-family: "Microsoft YaHei"; font-size:0.9em;
+  color: rgb(103, 175, 221);}
+.click_two1{ float:right;  text-align: right; font-family: "Microsoft YaHei"; font-size:0.9em;
+  color: rgb(103, 175, 221);}
+.click a{ font-family: "Microsoft YaHei"; font-size:0.9em;
+  color: rgb(103, 175, 221);
+}
+.line{ clear:both; width:90%; margin-left:auto; margin-right:auto; background-color:#BBB; height:1px; margin-top:12%; opacity:0.5;}
+.click_third a{ font-family: "Microsoft YaHei"; font-size:1.4em;
+  color: rgb(255, 86, 72); height: 50px;line-height: 50px; display: block;
+}
+.click_third{ float:right;color: rgb(103, 175, 221); width:15%; text-align: right;height: 50px;line-height: 50px; display: block;}
+.big{ padding-left:10%; color: rgb(218, 218, 218); font-size:1.3em;}
+.bottom{ width:100%; background-color:#ffffff; overflow:hidden; position:fixed; left:0; bottom:0;height:50px;line-height: 50px;}
+.now{ float:left;  margin-left:4%; }
+.now span{  font-family: "Microsoft YaHei"; font-size:0.85em;
+  color: rgb(148, 148, 148);
+}
+.buy{ float:right; width:35%; height:40px;  background-color: rgb(255, 86, 72); border-radius:6px; margin-right:2%;margin-top:5px;
+text-align:center; line-height:40px;}
+.buy a{  font-family: "Microsoft YaHei"; font-size:1em;
+  color: rgb(255, 255, 255);}
+.line_two{ clear:both; width:100%; height:1px; background-color:#BBB; margin-top:1%;}
+.gray_two{ width:100%; height:6px; background-color:#f1f2f4; margin-top:2%;}
+.container{ padding-bottom:45px;}
+.clear{clear:both;}
+
+.dialog-tu{}
+.dialog-tu .text-zi{ background:#fff;margin:0 auto; border-radius:15px;width:100%;padding-top:20px;}
+.dialog-tu{width:100%;margin:0 auto; position:fixed;top:15%;z-index:99999;}
+.dialog-tu p{color:#fff;}
+.dialog-tu p img{ max-width:100%;}
+.dialog-tu .wrap_zi{ position:relative;width:80%;margin:0 auto;padding-top:40px;}
+.close{ background:url(../images/close.png) no-repeat; background-size:60%;width:41px;height:41px; position:absolute;right:0px;z-index:9999;top:0px;}
+.dialog-tu .text-zi h2{ text-align:center;height:30px;line-height:30px; border-bottom:1px solid #e9e9ea;padding:0px 20px;} 
+.dialog-tu .text-zi p{color:#58595b; line-height:24px;padding:20px 20px;font-family:  "微软雅黑";font-size: 1.3em;}
+.wapper { width: 100%; height: 100%;background-color: rgba(0,0,0,0.7); position: fixed; z-index: 999; left: 0; top: 0; display: none; overflow-y: hidden; }
+.dialog{width:100%;margin:0 auto; position:fixed;top:25%;z-index:99999;}
+.dialog p{color:#fff;}
+.dialog-con h2{font-size: 16px; text-align: center; color: #fff;margin-bottom: 10px;}
+.input-cc{width: 100%; height:40px;line-height: 40px; border:0 none;}
+.sure-no .sure{width: 60px;float: left; text-align:center;background-color:#477a01;height:40px;line-height: 40px; border: 0 none; color: #fff;margin-right: 10px;}
+.sure-no{width: 130px;margin:10px auto;}
+.sure-no .no{width: 60px;float: left; text-align:center;background-color:#477a01;height:40px;line-height: 40px; border: 0 none; color: #fff;}
+.tit h2{ font-family: "Microsoft YaHei"; font-size:1.1em;
+  color: rgb(60, 60, 60);margin-left: 2%;margin-bottom: 10px;margin-top: 10px; font-weight: normal;}
+ .first .click_two{ width: 100%; height: 60px;}
+ .detail{width: 100%;}
+ .detail img{padding: 0px;margin:0px;max-width: 100%;vertical-align:bottom;}

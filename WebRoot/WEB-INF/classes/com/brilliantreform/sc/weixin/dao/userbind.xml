@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="weixinuserbind">
+   <typeAlias alias="weixinBindPhone" type="com.brilliantreform.sc.weixin.po.WeixinBindPhone"/>
+   <typeAlias alias="userinfo" type="com.brilliantreform.sc.user.po.UserInfo"/>
+   <select id="isExistsUser" parameterClass="map" resultClass="java.lang.Integer">
+       select count(*) from userbind_phone where openid=#openid#
+   </select>
+   <select id="getUserInfo" parameterClass="map" resultClass="userinfo">
+      select * from user_login where phone=#phone#
+   </select>
+   <select id="isBindCommunity" parameterClass="map" resultClass="java.lang.Integer">
+      select count(*) from user_baseinfo base
+      inner join user_login user on base.userid=user.userid
+      where user.phone=#phone#
+   </select>
+   <insert id="bindPhone"  parameterClass="map">
+       insert into userbind_phone(openid,phone)
+       values(#openid#,#phone#)
+   </insert>
+   <insert id="insertuserinfo" parameterClass="map">
+       insert into user_login(loginname,password,phone,username)
+       values(#loginname#,#password#,#phone#,#username#)
+   </insert>
+   <insert id="bindCommunity" parameterClass="map">
+       insert into user_baseinfo(userid,communityId)
+       values(#userid#,#communityId#)
+   </insert>
+   <select id="getOpenid" parameterClass="map" resultClass="hashmap">
+       select * from userbind_phone uphone
+       where 1=1
+       <isNotNull property="phone" open="and">
+           uphone.phone=#phone#
+       </isNotNull>
+   </select>
+</sqlMap>

@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="phoneOrder">
+    <typeAlias alias="phoneDistribean" type="com.brilliantreform.sc.phoneOrder.po.DistriOrderBean"/>
+    <typeAlias alias="phoneOrder" type="com.brilliantreform.sc.phoneOrder.po.PhoneOrder"/>
+    <typeAlias alias="phoneMgruser" type="com.brilliantreform.sc.user.mgrpo.MgrUser"/>
+    <resultMap class="com.brilliantreform.sc.phoneOrder.po.PhoneOrder" id="orderProductMap">
+        <result property="order_serial" column="order_serial"/>
+        <result property="order_id" column="order_id"/>
+        <result property="product_id" column="product_id"/>
+        <result property="product_amount" column="product_amount"/>
+        <result property="product_name" column="product_name"/>
+        <result property="product_price" column="product_price"/>
+    </resultMap>
+
+    <resultMap class="com.brilliantreform.sc.phoneOrder.po.PhoneOrder" id="orderDetailMap" groupBy="order_serial">
+        <result property="order_serial" column="order_serial"/>
+        <result property="order_price" column="order_price"/>
+        <result property="delivery_addr" column="delivery_addr"/>
+        <result property="delivery_phone" column="delivery_phone"/>
+        <result property="phone" column="phone"/>
+        <result property="user_id" column="userid"/>
+        <result property="delivery_time" column="delivery_time"/>
+        <result property="subList" resultMap="phoneOrder.orderProductMap"/>
+        <result property="delivery_type" column="delivery_type"/>
+        <result property="nick" column="nick"/>
+        <result property="order_time" column="order_time"/>
+        <result property="pickup_time" column="pickup_time"/>
+        <result property="order_phone" column="order_phone"/>
+        <result property="finish_time" column="finish_time"/>
+        <result property="create_time" column="create_time"/>
+        <result property="product_name" column="product_name"/>
+    </resultMap>
+
+    <resultMap class="com.brilliantreform.sc.phoneOrder.po.DistriOrderBean" id="deliveryProductMap">
+        <result property="order_serial" column="order_serial"/>
+        <result property="distri_detail_id" column="distri_detail_id"/>
+        <result property="product_id" column="product_id"/>
+        <result property="product_amount" column="product_amount"/>
+        <result property="product_name" column="product_name"/>
+        <result property="product_price" column="product_price"/>
+    </resultMap>
+    <resultMap class="com.brilliantreform.sc.phoneOrder.po.DistriOrderBean" id="deliveryDetailMap"
+               groupBy="distri_detail_id">
+        <result property="distri_detail_id" column="distri_detail_id"/>
+        <result property="order_serial" column="order_serial"/>
+        <result property="order_price" column="order_price"/>
+        <result property="pay_staus" column="pay_type"/>
+        <result property="remark" column="remark"/>
+        <result property="distri_staus" column="distri_staus"/>
+        <result property="delivery_addr" column="addr"/>
+        <result property="delivery_phone" column="phone"/>
+        <result property="delivery_time" column="delivery_time"/>
+        <result property="user_id" column="user_id"/>
+        <result property="subList" resultMap="phoneOrder.deliveryProductMap"/>
+    </resultMap>
+
+    <select id="getDistriHead" resultClass="phoneDistribean" parameterClass="java.util.HashMap">
+        select detail.phone,detail.nickName,detail.addr,ROUND(SUM(detail.order_price),2) order_price from distri_head
+        head
+        inner join distri_detail detail on head.distri_num=detail.distri_num
+        where 1=1
+        and exists (select * from distri_product where distri_staus=1 and order_serial=detail.order_serial)
+        <isNotNull property="distri_worker_id" open="and">
+            head.distri_worker_id=#distri_worker_id#
+        </isNotNull>
+        GROUP BY detail.phone,detail.nickName,detail.addr
+    </select>
+
+    <select id="getDistriDetail" resultClass="phoneDistribean" parameterClass="java.util.HashMap">
+        select detail.phone,detail.nickName,detail.addr,ROUND(SUM(detail.order_price),2) order_price from distri_detail
+        detail
+        INNER JOIN
+        (
+        SELECT max(distri_num) distri_num from distri_head where distri_worker_id=#distri_worker_id#
+        ) head on detail.distri_num=head.distri_num
+        where 1=1
+        <isNotNull property="phone" open="and">
+            detail.phone=#phone#
+        </isNotNull>
+        <isNotNull property="distri_staus" open="and">
+            detail.distri_staus=#distri_staus#
+        </isNotNull>
+        GROUP BY detail.phone,detail.nickName,detail.addr
+    </select>
+
+    <select id="getDistriProduct" resultClass="phoneDistribean" parameterClass="java.util.HashMap">
+        select product.* from distri_product product
+        inner join distri_detail detail on product.distri_detail_id=detail.distri_detail_id
+        INNER JOIN
+        (
+        SELECT max(distri_num) distri_num from distri_head where distri_worker_id=#distri_worker_id#
+        ) head on detail.distri_num=head.distri_num
+        where 1=1
+        <isNotNull property="phone" open="and">
+            detail.phone=#phone#
+        </isNotNull>
+        <isNotNull property="distri_staus" open="and">
+            detail.distri_staus=#distri_staus#
+        </isNotNull>
+
+    </select>
+    <update id="optDetail" parameterClass="java.util.HashMap">
+        update distri_detail
+        set distri_staus=#distri_staus#
+        <isNotNull property="remark" open=",">
+            remark=#remark#
+        </isNotNull>
+        where phone=#phone#
+        and exists(select * from distri_head where distri_head.distri_num=distri_detail.distri_num and
+        distri_worker_id=#distri_worker_id#)
+    </update>
+    <update id="optProduct" parameterClass="java.util.HashMap">
+        update distri_product
+        set distri_staus=#distri_staus#
+        where order_serial=#order_serial#
+    </update>
+    <select id="getSerialByPhone" parameterClass="map" resultClass="phoneDistribean">
+        select detail.* from distri_detail detail
+        INNER JOIN
+        (
+        SELECT max(distri_num) distri_num from distri_head where distri_worker_id=#distri_worker_id#
+        ) head on detail.distri_num=head.distri_num
+        where detail.phone=#phone#
+    </select>
+    <update id="updateOrderStatus" parameterClass="map">
+        update order_product op
+        INNER JOIN delivery_product dp on op.order_serial=dp.order_serial and op.order_id=dp.order_id
+        set op.order_status=#order_status#
+        where dp.distri_detail_id=#distri_detail_id#
+    </update>
+    <update id="updateOrderBaseStatus" parameterClass="map">
+        update order_base ob
+        set ob.order_status=#order_status#
+        where exists (select * from delivery_detail dd where ob.order_serial=dd.order_serial and dd.distri_detail_id=#distri_detail_id#)
+    </update>
+    <update id="finishOrderBase" parameterClass="map">
+        update order_base ob
+        set ob.order_status=#order_status# , ob.finish_time= now()
+        where exists (select * from delivery_detail dd where ob.order_serial=dd.order_serial and dd.distri_detail_id=#distri_detail_id#)
+    </update>
+
+    <select id="getOrderList" parameterClass="java.util.Map" resultMap="orderDetailMap">
+        SELECT ob.order_serial,ob.delivery_addr,ob.delivery_phone,ob.delivery_time ,op.order_id,
+        op.product_amount-IFNULL(refund.refund_amount,0) product_amount,op.product_price,op.product_id,sp.name
+        product_name,ob.order_price,ob.pay_type, ob.delivery_type,ul.nick,DATE_FORMAT(ob.order_time,'%Y-%m-%d %T') AS order_time,
+        DATE_FORMAT(ob.pickup_time,'%Y-%m-%d %T') AS pickup_time,op.order_phone,ul.phone,ul.userid,
+        DATE_FORMAT(ob.finish_time,'%Y-%m-%d %T') AS finish_time,
+        DATE_FORMAT(dd.create_time,'%Y-%m-%d %T') AS create_time
+        FROM order_base ob
+        INNER JOIN order_product op on ob.order_serial=op.order_serial
+        INNER JOIN service_product sp on op.product_id=sp.product_id
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        LEFT JOIN (select orp.order_id, sum(orp.refund_amount) as refund_amount from order_refund_base orb, order_refund_product orp
+        where orb.objid = orp.refund_id and orb.removetag = 0 and orb.return_status = 1 group by orp.order_id) refund ON op.order_id = refund.order_id
+        LEFT JOIN delivery_detail dd on dd.order_serial=ob.order_serial
+        WHERE ob.order_status IN (1,2,22)
+        AND NOT EXISTS (SELECT * FROM delivery_detail dd WHERE dd.order_serial=ob.order_serial)
+        AND ob.delivery_id is NULL
+        AND (ob.community_id=#community_id# or ob.sub_cid = #community_id#)
+    </select>
+
+    <!-- -->
+    <select id="getBaseProduct" parameterClass="java.util.Map" resultMap="orderDetailMap">
+        SELECT ob.order_serial,ob.delivery_addr,ob.delivery_phone,DATE_FORMAT(ob.delivery_time,'%Y-%m-%d %T') AS delivery_time,
+        op.order_id, op.product_amount-IFNULL(refund.refund_amount,0) product_amount,op.product_price,op.product_id,sp.name
+        product_name,ob.order_price,ob.pay_type, ob.delivery_type,ul.nick,DATE_FORMAT(ob.order_time,'%Y-%m-%d %T') AS order_time,
+        ob.pickup_time,op.order_phone,DATE_FORMAT(ob.finish_time,'%Y-%m-%d %T') AS finish_time
+        ,DATE_FORMAT(dd.create_time,'%Y-%m-%d %T') AS create_time
+        FROM order_base ob
+        INNER JOIN order_product op on ob.order_serial=op.order_serial
+        INNER JOIN service_product sp on op.product_id=sp.product_id
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        LEFT JOIN (select orp.order_id, sum(orp.refund_amount) refund_amount from order_refund_base orb, order_refund_product orp
+        where orb.objid = orp.refund_id and orb.removetag = 0 and orb.return_status = 1 group by orp.order_id) refund ON op.order_id = refund.order_id
+        LEFT JOIN delivery_detail dd on dd.order_serial=ob.order_serial
+        WHERE ob.order_status = 3
+        AND ob.delivery_id IS NULL
+        AND (ob.community_id=#community_id# or ob.sub_cid = #community_id#)
+        AND ob.finish_time >DATE_FORMAT(NOW(),'%y-%m-%d')
+        ORDER BY ob.finish_time DESC
+    </select>
+    <!-- -->
+
+    <parameterMap class="java.util.HashMap" id="swapParameters">
+        <parameter property="p_order_serial" javaType="java.lang.String" jdbcType="varchar" mode="IN"/>
+        <parameter property="p_distri_worker_id" javaType="java.lang.Integer" jdbcType="int" mode="IN"/>
+        <parameter property="p_distri_community_id" javaType="java.lang.Integer" jdbcType="int" mode="IN"/>
+        <parameter property="p_result_code" javaType="java.lang.Integer" jdbcType="int" mode="OUT"/>
+    </parameterMap>
+
+    <procedure id="acceptOrder" parameterMap="swapParameters">
+        <![CDATA[
+			{call p_deliver_acceptOrder(?,?,?,?)}
+   		]]>
+    </procedure>
+
+    <update id="finishOrder" parameterClass="phoneDistribean">
+        update delivery_detail
+        set distri_staus=1,
+        finish_time=NOW()
+        where distri_detail_id=#distri_detail_id#
+    </update>
+
+    <select id="getDeliveryDetail" resultMap="deliveryDetailMap" parameterClass="map">
+        SELECT
+        detail.distri_detail_id,detail.order_serial,detail.pay_staus,detail.remark,detail.distri_staus
+        ,detail.addr,detail.phone,detail.delivery_time ,detail.order_price-IFNULL(orfsum.refund_price,0) order_price
+        ,product.distri_product_id,product.product_id,product.product_name,product.product_amount-IFNULL(refund.refund_amount,0)
+        product_amount ,product.product_price,detail.distri_staus,product.order_id
+        ,ob.pay_type,ob.delivery_type,ul.nick,ob.user_id
+        FROM delivery_detail detail
+        LEFT JOIN (SELECT sum(orb.refund_money) refund_price, orb.order_serial FROM order_refund_base orb
+        where orb.removetag = 0 and orb.return_status = 1 group by orb.order_serial) orfsum ON
+        detail.order_serial=orfsum.order_serial
+        INNER JOIN delivery_product product on detail.distri_detail_id=product.distri_detail_id
+        LEFT JOIN (select orp.order_id, sum(orp.refund_amount) refund_amount from order_refund_base orb, order_refund_product orp
+        where orb.objid = orp.refund_id and orb.removetag = 0 and orb.return_status = 1 group by orp.order_id) refund ON product.order_id = refund.order_id
+        INNER JOIN order_base ob on detail.order_serial=ob.order_serial
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        where detail.distri_staus=0
+        and ob.order_status IN (1,2,22)
+        <isNotNull property="distri_worker_id" open="and">
+            detail.distri_worker_id=#distri_worker_id#
+        </isNotNull>
+    </select>
+
+    <select id="getNewOrderCount" resultClass="java.lang.Integer" parameterClass="map">
+        SELECT COUNT(1)
+        FROM order_base WHERE
+        community_id=#community_id#
+        AND
+        TIMESTAMPDIFF(SECOND,order_time,NOW()) BETWEEN 0 AND 8
+    </select>
+
+    <update id="updatePreSaleOrder" parameterClass="String">
+        UPDATE order_base SET order_status = 3,finish_time=NOW(), delivery_time = now() WHERE order_serial = #order_serial#
+    </update>
+
+    <update id="updatePreSaleOrderProduct" parameterClass="String">
+        UPDATE order_product SET order_status = 3, delivery_time = now() WHERE order_serial = #order_serial#
+    </update>
+
+    <select id="getMgrUser" resultClass="phoneMgruser" parameterClass="String">
+        select * from mgr_user mu,mgr_user_community muc WHERE mu.user_id = muc.user_id and loginname=#loginname# limit 1
+    </select>
+
+    <select id="getOrderBase" parameterClass="java.util.Map" resultMap="orderDetailMap">
+        SELECT ob.order_serial,ob.delivery_addr,ob.delivery_phone,DATE_FORMAT(ob.delivery_time,'%Y-%m-%d %T') AS delivery_time,
+        op.order_id, op.product_amount-IFNULL(refund.refund_amount,0) product_amount,op.product_price,op.product_id,sp.name
+        product_name,ob.order_price,ob.pay_type, ob.delivery_type,ul.nick,DATE_FORMAT(ob.order_time,'%Y-%m-%d %T') AS order_time,
+        ob.pickup_time,op.order_phone,DATE_FORMAT(ob.finish_time,'%Y-%m-%d %T') AS finish_time
+        ,DATE_FORMAT(dd.create_time,'%Y-%m-%d %T') AS create_time
+        FROM order_base ob
+        INNER JOIN order_product op on ob.order_serial=op.order_serial
+        INNER JOIN service_product sp on op.product_id=sp.product_id
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        LEFT JOIN (select orp.order_id, sum(orp.refund_amount) as refund_amount from order_refund_base orb, order_refund_product orp
+        where orb.objid = orp.refund_id and orb.removetag = 0 and orb.return_status = 1 group by orp.order_id) refund ON op.order_id = refund.order_id
+        LEFT JOIN delivery_detail dd on dd.order_serial=ob.order_serial
+        WHERE ob.order_status = 5
+        AND ob.delivery_id IS NULL
+        AND (ob.community_id=#community_id# or ob.sub_cid = #community_id#)
+        ORDER BY ob.order_time DESC
+    </select>
+
+    <update id="updatePreSaleOrder2" parameterClass="String">
+        UPDATE order_base SET order_status = 2 WHERE order_serial = #order_serial#
+    </update>
+
+    <update id="updatePreSaleOrderProduct2" parameterClass="String">
+        UPDATE order_product SET order_status = 2 WHERE order_serial = #order_serial#
+    </update>
+
+    <!--根据openid查找mgr_user-->
+    <select id="selOpenidMgrUser" parameterClass="String" resultClass="hashMap">
+        select * from mgr_openid where openid = #openid#
+    </select>
+    <!-- 根据umgr_user的user_id 插入openid -->
+    <update id="updateMgrUserOpenid" parameterClass="phoneMgruser">
+        UPDATE mgr_openid SET openid=#openid#  where user_id=#user_id#
+    </update>
+    <delete id="delMgrUserOpenid" parameterClass="phoneMgruser">
+        DELETE  FROM  mgr_openid WHERE user_id = #user_id#
+    </delete>
+
+    <select id="selMgrUserByid" resultClass="phoneMgruser" parameterClass="int">
+        select * from mgr_user where user_id = #user_id#
+    </select>
+
+    <!-- 根据umgr_user的user_id 插入openid -->
+    <insert id="insertMgrUserOpenid" parameterClass="phoneMgruser">
+        INSERT into mgr_openid SET openid=#openid# , user_id=#user_id#
+        <selectKey resultClass="int" keyProperty="user_id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+    <!--推送-->
+    <select id="weiXinTs"  resultMap="orderDetailMap">
+        SELECT ob.order_serial,ob.delivery_addr,ob.delivery_phone,ob.delivery_time ,op.order_id,
+        op.product_amount-IFNULL(refund.refund_amount,0) product_amount,op.product_price,op.product_id,sp.name
+        product_name,ob.order_price,ob.pay_type, ob.delivery_type,ul.nick,DATE_FORMAT(ob.order_time,'%Y-%m-%d %T') AS order_time,
+        DATE_FORMAT(ob.pickup_time,'%Y-%m-%d %T') AS pickup_time,op.order_phone,ul.phone,ul.userid,
+        DATE_FORMAT(ob.finish_time,'%Y-%m-%d %T') AS finish_time,
+        DATE_FORMAT(dd.create_time,'%Y-%m-%d %T') AS create_time
+        FROM order_base ob
+        INNER JOIN order_product op on ob.order_serial=op.order_serial
+        INNER JOIN service_product sp on op.product_id=sp.product_id
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        LEFT JOIN (select orp.order_id, sum(orp.refund_amount) as refund_amount from order_refund_base orb, order_refund_product orp
+        where orb.objid = orp.refund_id and orb.removetag = 0 and orb.return_status = 1 group by orp.order_id) refund ON op.order_id = refund.order_id
+        LEFT JOIN delivery_detail dd on dd.order_serial=ob.order_serial
+        WHERE ob.order_status IN (1,2,22)
+        AND NOT EXISTS (SELECT * FROM delivery_detail dd WHERE dd.order_serial=ob.order_serial)
+        AND ob.delivery_id is NULL
+        AND TIMESTAMPDIFF(SECOND,ob.order_time,NOW()) BETWEEN 0 AND 10
+    </select>
+    <select id="getUserId" parameterClass="map" resultClass="hashmap">
+        SELECT * FROM mgr_user_community mu WHERE mu.community_id = (SELECT ub.communityId FROM user_baseinfo ub WHERE ub.userid=#userid#)
+    </select>
+
+    <select id="getPhoneOpenid" parameterClass="int" resultClass="hashmap">
+        select * from mgr_openid where user_id = #user_id#
+    </select>
+
+</sqlMap>

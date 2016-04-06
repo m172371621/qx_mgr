@@ -1,0 +1,76 @@
+{"msg":"s",
+"pricecount":123,
+"list":
+[{
+					"proid": 12330,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahh=-------",
+					"proprice": 10.231,
+					"protips": ["特价", "限时"],
+					"prochangestand": "斤",
+					"pronum": 12
+				},{
+					"proid": 12331,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahhah222222",
+					"proprice": 12,"protips": ["特价", "限时"],
+					"prochangestand": "斤",
+					"pronum":9
+				},{
+					"proid": 12332,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahhahccccccccc",
+					"proprice": 23,"protips": ["特价", "限时"],
+					"prochangestand": "斤",
+					"pronum": 12
+				},{
+					"proid": 12333,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahhaaaaaaaaaa",
+					"proprice": 13,
+					"prochangestand": "斤","protips": ["特价", "限时"],
+					"pronum": 14
+				},{
+					"proid": 12334,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahha5555555555",
+					"proprice": 14,
+					"prochangestand": "斤","protips": ["特价", "限时"],
+					"pronum": 1
+				},{
+					"proid": 12335,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahhahah000",
+					"proprice": 21,
+					"prochangestand": "斤","protips": ["特价", "限时"],
+					"pronum": 2
+				},{
+					"proid": 12336,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahha777777#33",
+					"proprice": 41,"protips": ["特价", "限时"],
+					"prochangestand": "斤",
+					"pronum": 12
+				},{
+					"proid": 12337,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahhaha1111111",
+					"proprice": 98,"protips": ["特价", "限时"],
+					"prochangestand": "斤",
+					"pronum": 10
+				},{
+					"proid": 12337,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahhaha1111111",
+					"proprice": 98,"protips": ["特价", "限时"],
+					"prochangestand": "斤",
+					"pronum": 10
+				},{
+					"proid": 12337,
+					"proimg": "/qxv3/images/pro1.png",
+					"proname": "hahhaha1111111",
+					"proprice": 98,"protips": ["特价", "限时"],
+					"prochangestand": "斤",
+					"pronum": 1
+				}]
+}

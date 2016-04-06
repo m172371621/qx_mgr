@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMapConfig PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"
+    "http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+
+<sqlMapConfig>
+    <settings
+    cacheModelsEnabled="true"
+    enhancementEnabled="true"
+    lazyLoadingEnabled="true"
+    statementCachingEnabled="true"
+    useStatementNamespaces="true"
+    />
+
+	<sqlMap resource="com/brilliantreform/sc/user/dao/user.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/comment/dao/comment.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/community/dao/community.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/consultation/dao/consultation.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/order/dao/order.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/product/dao/product.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/service/dao/service.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/task/dao/task.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/circle/dao/circle.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/order/cxy/dao/order.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/statistics/dao/statistics.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/active/dao/active.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/system/dicti/dao/dicti.xml"/>
+	
+	<sqlMap resource="com/brilliantreform/sc/express/dao/express.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/weixin/dao/userbind.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/weixin/dao/deliver.xml"/>
+	
+	<sqlMap resource="com/brilliantreform/sc/qxcard/dao/qxcard.xml"/>
+
+	<sqlMap resource="com/brilliantreform/sc/alipay/dao/alipaylog.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/weixin/dao/paylog.xml"/>
+
+	<sqlMap resource="com/brilliantreform/sc/order/dao/orderRefund.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/incomming/dao/incoming_order.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/outgoing/dao/outgoing_order.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/order/dao/serviceOrder.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/distri/dao/distri.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/card/dao/card.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/ad/dao/ad.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/stock/dao/stock.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/order/dao/orderStatusLog.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/confgure/dao/config_community.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/POS/dao/posTemp.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/order/dao/msg_info.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/sys/dao/sys.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/sys/dao/sysjob.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/sys/dao/sysmenu.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/purchase/dao/purchase.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/community/dao/communityRegister.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/store/dao/store.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/employee/dao/employee.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/weixin/dao/weixinqxx.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/weixin/dao/weixinpay.xml"/>
+
+	<sqlMap resource="com/brilliantreform/sc/weixin/dao/weixintuijian.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/phoneOrder/dao/phoneOrder.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/saleplugins/dao/pwsearch.xml"/>
+	<sqlMap resource="com/brilliantreform/sc/scancodeshpping/dao/postsan.xml"/>
+    <sqlMap resource="com/brilliantreform/sc/product/dao/warehouse.xml"/>
+    <sqlMap resource="com/brilliantreform/sc/activity/dao/prize.xml"/>
+    <sqlMap resource="com/brilliantreform/sc/activity/dao/coupon.xml"/>
+
+	<sqlMap resource="com/brilliantreform/sc/phoneOrder/dao/qxx.xml"/>
+
+</sqlMapConfig>

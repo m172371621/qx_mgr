@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="card">
+    <typeAlias alias="cardNumConfig" type="com.brilliantreform.sc.activity.po.CardNumConfig" />
+    <typeAlias alias="prizeUser" type="com.brilliantreform.sc.activity.po.PrizeUser" />
+
+	<select id="findCommunityCardInfo" parameterClass="int" resultClass="hashmap">
+		<![CDATA[
+		SELECT t1.*, t2.card_name, t3.level_name, t3.probability,
+		(select amount from community_cardlevel where level_id = t1.level_id and community_id = t1.community_id limit 1) as amount
+		FROM community_card t1, card_info t2, card_level t3
+		WHERE t1.card_id = t2.card_id AND t1.level_id = t3.level_id
+		AND t1.community_id = #community_id#
+		ORDER BY t3.probability
+		]]>
+	</select>
+	
+	<update id="updateAmount" parameterClass="hashmap" >
+		UPDATE community_cardlevel SET amount = #amount# WHERE level_id = #level_id# AND community_id = #community_id#
+	</update>
+	
+	<update id="updateCardLevel" parameterClass="hashmap">
+		UPDATE card_level SET probability = #probability# WHERE level_id = #level_id#
+	</update>
+
+	<update id="updateAward" parameterClass="hashmap">
+		UPDATE community_card SET award = #award# WHERE community_id = #community_id# AND level_id = #level_id#
+	</update>
+	<select id="findCardNum" parameterClass="int" resultClass="hashmap">
+		<![CDATA[
+			select * from card_num_config where community_id = #community_id#
+		]]>
+	</select>
+	
+	<delete id="delCardNum" parameterClass="int">
+		delete from card_num_config where objid = #objid#
+	</delete>
+	
+	<update id="updateCardNum" parameterClass="map">
+		update card_num_config set order_price = #order_price#,card_num=#card_num# where objid=#objid#
+	</update>
+	
+	<insert id="insertCardNum" parameterClass="map">
+		insert into card_num_config(community_id,order_price,card_num) values(#community_id#,#order_price#,#card_num#)
+	</insert>
+
+    <select id="findCommunityCardInfoV4" parameterClass="hashmap" resultClass="hashmap">
+		SELECT t1.*, t2.card_name, t3.level_name, t3.probability, t4.communityname as community_name,
+		(select amount from community_cardlevel where level_id = t1.level_id and community_id = t1.community_id limit 1) as amount
+		FROM community_card t1, card_info t2, card_level t3, community_base t4
+		WHERE t1.card_id = t2.card_id AND t1.level_id = t3.level_id and t1.community_id = t4.communityid
+		<isNotEmpty property="community_list" prepend="and">
+            t1.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+		ORDER BY t1.community_id, t3.probability
+    </select>
+
+    <select id="searchCardNumConfig" parameterClass="hashmap" resultClass="hashmap">
+        select t1.*, t2.communityname as community_name
+        from card_num_config t1, community_base t2
+        WHERE t1.community_id = t2.communityid
+        <isNotEmpty property="community_list" prepend="and">
+            t1.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        ORDER BY t1.community_id, t1.order_price
+    </select>
+    
+    <insert id="insertCardNumConfig" parameterClass="cardNumConfig">
+        INSERT INTO card_num_config
+        (community_id, order_price, card_num)
+        VALUES
+        (#community_id#, #order_price#, #card_num#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateCardNumConfig" parameterClass="cardNumConfig">
+        UPDATE card_num_config
+        SET
+        community_id = #community_id#,
+        order_price = #order_price#,
+        card_num = #card_num#
+        WHERE
+        objid = #objid#
+    </update>
+
+    <select id="getCardNumConfigById" parameterClass="int" resultClass="cardNumConfig">
+        SELECT * FROM card_num_config WHERE objid = #objid#
+    </select>
+    
+    <select id="getCardNumByPrice" parameterClass="hashmap" resultClass="cardNumConfig">
+        SELECT * FROM card_num_config WHERE community_id = #community_id# AND order_price <![CDATA[<=]]> #order_price# ORDER BY card_num DESC limit 1
+    </select>
+    
+    <insert id="insertPrizeUser" parameterClass="prizeUser">
+        INSERT INTO prize_user
+        (user_id, remainder, total, updatetime)
+        VALUES
+        (#user_id#, #remainder#, #total#, #updatetime#)
+    </insert>
+
+    <select id="getPrizeUserByUserId" parameterClass="int" resultClass="prizeUser">
+        SELECT * FROM prize_user WHERE user_id = #value#
+    </select>
+
+    <update id="addUserPrizeCount" parameterClass="hashmap">
+        UPDATE prize_user SET remainder = remainder + #count#, total = total + #count# WHERE user_id = #user_id#
+    </update>
+    
+</sqlMap>

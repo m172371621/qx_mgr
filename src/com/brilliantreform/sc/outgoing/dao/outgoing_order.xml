@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="outgoing_order">
+    <typeAlias alias="IncommingHeaderBean" type="com.brilliantreform.sc.incomming.po.IncommingHeaderBean"/>
+    <typeAlias alias="IncommingDetailBean" type="com.brilliantreform.sc.incomming.po.IncommingDetailBean"/>
+    <typeAlias alias="ProductRealStockBean" type="com.brilliantreform.sc.incomming.po.ProductRealStockBean"/>
+    <typeAlias alias="ProductBatchStockBean" type="com.brilliantreform.sc.incomming.po.ProductBatchStockBean"/>
+    <typeAlias alias="stockChangeLog" type="com.brilliantreform.sc.incomming.po.StockChangeLogBean"/>
+    <!--查询进货单汇总  -->
+    <select id="getIncommingHeader" resultClass="IncommingHeaderBean" parameterClass="java.util.Map">
+        select header.*,cb.communityName community_name from product_stockchange_header header
+        inner join community_base cb on header.community_id=cb.communityId
+        where header.community_id=#community_id#
+          <isGreaterThan property="state" compareValue="0">
+             and header.state=#state#
+          </isGreaterThan>
+          <isNotNull property="stock_type" open="and">
+             header.stock_type=#stock_type#
+          </isNotNull>
+          <isNotNull property="time_from" open="and">
+             create_time &gt; #time_from#
+          </isNotNull>
+          <isNotNull property="time_to" open="and">
+             create_time &lt; #time_to#
+          </isNotNull>
+        order by header.stockchange_header_id desc
+        limit #start#,#size#
+    </select>
+    <!-- 查询进货单汇总总数 -->
+    <select id="getIncommingHeaderCount" resultClass="java.lang.Integer" parameterClass="java.util.Map">
+        select count(*) from product_stockchange_header
+    </select>
+    <!--查询进货单明细 -->
+    <select id="getIncommingDetail" resultClass="IncommingDetailBean" parameterClass="IncommingDetailBean">
+       select detail.*,product.name product_name,product.barcode,product.price from product_stockchange_detail detail
+       LEFT JOIN service_product product on detail.product_id=product.product_id
+       where stockchange_header_id=#stockchange_header_id#
+       <isNotNull property="start" >
+          limit #start#,#size#
+       </isNotNull>
+    </select>
+    <!--查询进货单明细总数 -->
+    <select id="getIncommingDetailCount" resultClass="java.lang.Integer" parameterClass="IncommingDetailBean">
+       select count(*) from product_stockchange_detail
+       where stockchange_header_id=#stockchange_header_id#
+    </select>
+    
+    <!--插入进货单汇总  -->
+    <insert id="insertIncommingHeader" parameterClass="IncommingHeaderBean" >
+       INSERT INTO product_stockchange_header(community_id,stock_type,create_by,state,stockchange_header_no)
+       VALUES(#community_id#,#stock_type#,#create_by#,#state#,#stockchange_header_no#)
+       <selectKey resultClass="int" keyProperty="stockchange_header_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+    </insert>
+    
+    <!-- 修改汇总信息 -->
+    <update id="updateHeaderInfo" parameterClass="IncommingHeaderBean">
+        update product_stockchange_header
+        set state=#state#
+        where stockchange_header_id=#stockchange_header_id#
+    </update>
+    <!--插入进货单明细 -->
+    <insert id="insertIncommingDetail" parameterClass="IncommingDetailBean" >
+       INSERT INTO product_stockchange_detail(stockchange_header_id,batch_serial,product_id,stock_type,change_count,unit_price,create_by, remark)
+       VALUES(#stockchange_header_id#,#batch_serial#,#product_id#,#stock_type#,#change_count#,#unit_price#,#create_by#, #remark#)
+    </insert>
+    <!--查询商品  -->
+    <select id="queryGoods" parameterClass="java.util.Map" resultClass="com.brilliantreform.sc.product.po.ProductDouble">
+        SELECT sp.*,pbs.order_current_sum, cb.communityName from service_product sp
+        INNER JOIN community_base cb ON sp.community_id = cb.communityid
+        left join (SELECT
+	    product_id,order_current_sum
+        FROM
+	      product_batch_stock pb
+        WHERE EXISTS (SELECT product_id,batch_serial FROM  (SELECT product_id,MAX(batch_serial) batch_serial FROM
+	                                  product_batch_stock
+                               WHERE
+                                     community_id=#community_id#
+                                     AND order_current_sum > 0
+                               GROUP BY product_id
+                                     ) ds
+                              WHERE pb.product_id=ds.product_id AND pb.batch_serial=ds.batch_serial
+                                     )) pbs on sp.product_id=pbs.product_id
+        WHERE sp.community_id=#community_id#
+          <isNotNull property="product_name" open="and">
+             (name like concat('%',#product_name#,'%') or barcode like concat('%',#product_name#,'%'))
+          </isNotNull>
+    </select>
+    <!--删除进货单汇总  -->
+    <delete id="delIncommintHeader" parameterClass="IncommingHeaderBean">
+        delete from product_stockchange_header 
+        where stockchange_header_id=#stockchange_header_id#
+    </delete>
+    <!--删除进货单明细商品  -->
+    <delete id="delIncommintDetail" parameterClass="IncommingDetailBean">
+        delete from product_stockchange_detail
+        where stockchange_detail_id=#stockchange_detail_id#
+    </delete>
+    <select id="getMaxNo" parameterClass="java.util.Map" resultClass="java.lang.String">
+        SELECT Max(RIGHT(stockchange_header_no,6)) from product_stockchange_header
+        WHERE community_id=#community_id#
+    </select>
+    <!-- 查询当前商品实时库存 -->
+    <select id="getProductStockById" parameterClass="ProductRealStockBean" resultClass="ProductRealStockBean">
+        select * from product_real_stock
+        where product_id=#product_id#
+          and community_id=#community_id#
+    </select>
+    <!-- 更新商品实时库存 -->
+    <update id="updateProductStockById" parameterClass="ProductRealStockBean">
+        update product_real_stock
+        set real_stock_sum=real_stock_sum+#real_stock_sum#
+        where product_id=#product_id#
+          and community_id=#community_id#
+    </update>
+    <!-- 插入商品实时库存 -->
+    <insert id="insertProductStock" parameterClass="ProductRealStockBean">
+        insert into product_real_stock(product_id,community_id,real_stock_sum,pre_incomming_price)
+        values(#product_id#,#community_id#,#real_stock_sum#,#pre_incomming_price#)
+    </insert>
+     <!-- 查询批次商品库存,查询最新批次 -->
+    <select id="getProductBatchStockById" parameterClass="ProductBatchStockBean" resultClass="ProductBatchStockBean">
+        SELECT
+	    *
+        FROM
+	      product_batch_stock pbs
+        WHERE batch_serial in (SELECT MAX(batch_serial) FROM
+	                                  product_batch_stock pbs
+                               WHERE
+	                                 product_id=#product_id#
+                                     and community_id=#community_id#
+                                     AND order_current_sum > 0)
+          and product_id=#product_id#
+          and community_id=#community_id#
+          AND order_current_sum > 0
+    </select>
+    <!-- 更新批次商品库存 -->
+    <update id="updateProductBatchStockById" parameterClass="ProductBatchStockBean">
+        update product_batch_stock
+        set stock_sum=#stock_sum#
+        <isNotNull property="batch_serial" >
+          , order_current_sum=#order_current_sum#
+        </isNotNull>
+        where product_id=#product_id#
+          and community_id=#community_id#
+        <isNotNull property="batch_serial">
+          and batch_serial=#batch_serial#
+        </isNotNull>
+    </update>
+    <!-- 插入商品批次库存 -->
+    <insert id="insertProductBatchStock" parameterClass="ProductBatchStockBean">
+        insert into product_batch_stock(batch_id,community_id,batch_serial,product_id,incommint_price,stock_sum,order_current_sum)
+        values(#batch_id#,#community_id#,#batch_serial#,#product_id#,#incommint_price#,#stock_sum#,#order_current_sum#)
+    </insert>
+    <!-- 插入库存变动记录表 -->
+    <insert id="insertChangeLog" parameterClass="stockChangeLog">
+        insert into stock_change_log(product_id,community_id,batch_serial,log_type,order_current_sum,stock_sum,create_by,create_type,ip)
+        values(#product_id#,#community_id#,#batch_serial#,#log_type#,#order_current_sum#,#stock_sum#,#create_by#,#create_type#,#ip#)
+    </insert>
+</sqlMap>

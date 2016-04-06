@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="task">
+
+	<typeAlias alias="task" type="com.brilliantreform.sc.task.po.Task" />
+	<typeAlias alias="taskMedia" type="com.brilliantreform.sc.task.po.TaskMedia" />
+	<typeAlias alias="taskProperty" type="com.brilliantreform.sc.task.po.TaskProperty" />
+	<typeAlias alias="taskQueryBean" type="com.brilliantreform.sc.task.po.TaskQueryBean" />
+	<typeAlias alias="propertyInfo" type="com.brilliantreform.sc.task.po.PropertyInfo"/>
+	<typeAlias alias="service_order" type="com.brilliantreform.sc.task.po.Service_order"/>
+	
+	<insert id="insertTask" parameterClass="task">
+		INSERT INTO task_base
+			(task_title, task_dec, send_user_id, task_type, consultation_id,tip, receive_addr,target_user_type, task_status, receive_user_id, phone, publish_time,expired_time)
+		VALUES
+			(#task_title#, #task_dec#, #send_user_id#, #task_type#, #consultation_id#, #tip#, #receive_addr#,  #target_user_type#, #task_status#, #receive_user_id#, #phone#, #publish_time#, #expired_time#)
+		<selectKey resultClass="int" keyProperty="task_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<insert id="insertTaskMedia" parameterClass="taskMedia">
+		INSERT INTO task_media
+			(task_type,task_id, media_url,type,media_order,createTime)
+		VALUES
+			(#task_type#,#task_id#, #media_url#, #type#, #media_order#, now())
+		
+	</insert>
+	
+	<insert id="insertTaskProperty" parameterClass="taskProperty">
+		INSERT INTO task_property
+			(task_title, task_dec, task_status, pics, send_user,publish_time, complete_time)
+		VALUES
+			(#task_title#, #task_dec#, #task_status#, #pics#,  #send_user#,  #publish_time#, #complete_time#)
+		<selectKey resultClass="int" keyProperty="task_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+
+	</insert>
+	
+	<select id="getTaskByTime" resultClass="task" parameterClass="map">
+		SELECT
+			t1.*, t3.nick AS send_user_name, t2.avatar as send_avatar
+		FROM
+			user_login t3,
+			user_baseinfo t2,
+			task_base t1
+		WHERE
+			t1.task_type = 1 and t1.task_status = 1
+		AND
+			t1.send_user_id = t3.userid  and t3.userid = t2.userid
+		order by t1.publish_time limit #begin#,#end#
+	</select>
+	
+	<select id="getTaskByTimeDesc" resultClass="task" parameterClass="map">
+		SELECT
+			t1.*, t3.nick AS send_user_name , t2.avatar as send_avatar
+		FROM
+			user_login t3,user_baseinfo t2,
+			task_base t1
+		WHERE
+			t1.task_type = 1 and t1.task_status = 1 
+		AND
+			t1.send_user_id = t3.userid  and t3.userid = t2.userid
+			
+		order by t1.publish_time desc limit #begin#,#end#
+	</select>
+	
+	<select id="getTaskByTip" resultClass="task" parameterClass="map">
+		SELECT
+			t1.*, t3.nick AS send_user_name , t2.avatar as send_avatar
+		FROM
+			user_login t3,user_baseinfo t2,
+			task_base t1
+		WHERE
+			t1.task_type = 1 and t1.task_status = 1 
+		AND
+			t1.send_user_id = t3.userid  and t3.userid = t2.userid
+		order by t1.tip limit #begin#,#end#
+	</select>
+	
+	<select id="getTaskByTipDesc" resultClass="task" parameterClass="map">
+		SELECT
+			t1.*, t3.nick AS send_user_name, t2.avatar as send_avatar
+		FROM
+			user_login t3,user_baseinfo t2,
+			task_base t1
+		WHERE
+			t1.task_type = 1 and t1.task_status = 1 
+		AND
+			t1.send_user_id = t3.userid  and t3.userid = t2.userid
+		order by t1.tip desc limit #begin#,#end#
+	</select>
+	
+	<select id="getTaskByUserReceive" resultClass="task" parameterClass="map">
+		SELECT
+			t1.*, t3.nick AS send_user_name,
+			t2.nick AS receive_user_name,
+			t4.avatar as send_avatar
+		FROM
+			user_baseinfo t4,
+			user_login t3,
+			task_base t1
+		LEFT OUTER JOIN user_login t2 ON t1.receive_user_id = t2.userid
+		WHERE
+			t1.receive_user_id = #user_id#
+		AND 
+			t1.send_user_id = t3.userid and t3.userid = t4.userid
+		order by t1.publish_time desc limit #begin#,#end#
+	</select>
+	
+	<select id="getTaskByUserSend" resultClass="task" parameterClass="map">
+		SELECT
+			t1.*, t3.nick AS send_user_name,
+			t2.nick AS receive_user_name,
+			t4.avatar as send_avatar
+		FROM
+			user_baseinfo t4,
+			user_login t3,
+			task_base t1
+		LEFT OUTER JOIN user_login t2 ON t1.receive_user_id = t2.userid
+		WHERE
+			t1.send_user_id = #user_id#
+		AND 
+			t1.send_user_id = t3.userid  and t3.userid = t4.userid
+		order by t1.publish_time desc limit #begin#,#end#
+
+	</select>
+	
+
+	
+
+	
+	<!-- mgr -->
+	
+	<select id="getTaskMediaList" resultClass="taskMedia" parameterClass="map">
+		select * from task_media where task_id = #task_id# 
+	</select>
+	
+	<select id="getTask" resultClass="task" parameterClass="int">
+		SELECT
+			t1.*, t3.loginname AS send_user_name,
+			t2.loginname AS receive_user_name,
+			t4.communityName AS community
+		FROM
+			community_base t4,
+			user_login t3,
+			task_base t1		
+		LEFT OUTER JOIN user_login t2 ON t1.receive_user_id = t2.userid
+		WHERE
+			t1.send_user_id = t3.userid
+			and t1.community_id = t4.communityId
+			and t1.task_id = #id#
+			
+	</select>
+	
+	<update id="updateTask" parameterClass="task">
+		update task_base
+			set task_id = #task_id# 
+			<dynamic>
+			<isNotNull property="task_status" prepend=",">
+			task_status = #task_status#
+			</isNotNull>
+			<isNotNull property="receive_user_id" prepend=",">
+			receive_user_id = #receive_user_id#
+			</isNotNull>
+			<isNotNull property="complete_time" prepend=",">
+			complete_time = #complete_time#
+			</isNotNull>
+			</dynamic>
+		where task_id = #task_id#  
+	</update>
+	
+	<select id="searchTask" resultClass="task" parameterClass="taskQueryBean">
+		SELECT
+			t1.*, t3.loginname AS send_user_name,
+			t2.loginname AS receive_user_name,
+			t4.communityName AS community
+		FROM
+			community_base t4,
+			user_login t3,
+			task_base t1		
+		LEFT OUTER JOIN user_login t2 ON t1.receive_user_id = t2.userid
+		WHERE
+			t1.send_user_id = t3.userid and t1.community_id = t4.communityId
+			<dynamic>
+			<isNotNull property="task_status">
+	 		   		<isEqual property="task_status" compareValue="0" prepend="and">
+					
+					</isEqual>
+					<isEqual property="task_status" compareValue="1" prepend="and">
+					(t1.task_status = 1 or t1.task_status = 2 )
+					</isEqual>
+					<isEqual property="task_status" compareValue="3" prepend="and">
+					(t1.task_status = 3 or t1.task_status = 4 or t1.task_status = 6 or t1.task_status = 7)
+					</isEqual>
+					<isEqual property="task_status" compareValue="5" prepend="and">
+					t1.task_status = 5
+					</isEqual>
+					<isEqual property="task_status" compareValue="9" prepend="and">
+					t1.task_status = 9
+					</isEqual>
+			</isNotNull>
+			
+			<isNotNull property="send_user" prepend="and">
+				 t3.loginname = #send_user#
+			</isNotNull>
+			<isNotNull property="recv_user" prepend="and">
+				 t2.loginname = #recv_user#
+			</isNotNull>
+			<isNotNull property="phone" prepend="and">
+				 t3.phone = #phone#
+			</isNotNull>
+
+			<isNotNull property="task_cid" prepend="and">
+				t1.community_id = #task_cid#
+			</isNotNull>
+			<isNotNull property="start_time" prepend="and">
+				t1.publish_time <![CDATA[>]]> #start_time#
+			</isNotNull>
+			<isNotNull property="end_time" prepend="and">
+				t1.publish_time <![CDATA[<]]> #end_time#
+			</isNotNull>
+			<isNotNull property="title" prepend="and">
+				 t1.task_title like '%$title$%'
+			</isNotNull>
+		</dynamic>	
+		order by t1.publish_time desc 
+		limit #begin#,#size#
+	</select>
+	
+	<select id="countSearchTask" resultClass="int" parameterClass="taskQueryBean">
+		SELECT
+			count(0)
+		FROM
+			user_login t3,
+			task_base t1
+		LEFT OUTER JOIN user_login t2 ON t1.receive_user_id = t2.userid
+		WHERE
+			t1.send_user_id = t3.userid 
+		<dynamic>
+			<isNotNull property="task_status">
+	 		   		<isEqual property="task_status" compareValue="0" prepend="and">
+					
+					</isEqual>
+					<isEqual property="task_status" compareValue="1" prepend="and">
+					(t1.task_status = 1 or t1.task_status = 2 )
+					</isEqual>
+					<isEqual property="task_status" compareValue="3" prepend="and">
+					(t1.task_status = 3 or t1.task_status = 4 or t1.task_status = 6 or t1.task_status = 7)
+					</isEqual>
+					<isEqual property="task_status" compareValue="5" prepend="and">
+					t1.task_status = 5
+					</isEqual>
+					<isEqual property="task_status" compareValue="9" prepend="and">
+					t1.task_status = 9
+					</isEqual>
+			</isNotNull>
+			
+			<isNotNull property="send_user" prepend="and">
+				 t3.loginname = #send_user#
+			</isNotNull>
+			<isNotNull property="recv_user" prepend="and">
+				 t2.loginname = #recv_user#
+			</isNotNull>
+			<isNotNull property="phone" prepend="and">
+				 t3.phone = #phone#
+			</isNotNull>
+
+			<isNotNull property="task_cid" prepend="and">
+				t1.community_id = #task_cid#
+			</isNotNull>
+			<isNotNull property="start_time" prepend="and">
+				t1.publish_time <![CDATA[>]]> #start_time#
+			</isNotNull>
+			<isNotNull property="end_time" prepend="and">
+				t1.publish_time <![CDATA[<]]> #end_time#
+			</isNotNull>
+			<isNotNull property="title" prepend="and">
+				 t1.task_title like '%$title$%'
+			</isNotNull>
+		</dynamic>	
+	</select>
+	
+	<select id="searchTaskProperty" resultClass="taskProperty" parameterClass="taskQueryBean">
+		select t1.*,
+			   t2.nick as send_user_name,
+			   t2.phone as phone,
+			   t3.avatar as send_avatar,
+			   t4.communityName AS community,
+			   concat(t3.floor,'栋',t3.room, "室") as address
+	    from task_property t1,
+	         user_login t2,
+	         user_baseinfo t3,  
+	         community_base t4
+	    where t1.send_user = t2.userid
+	  		  and t1.send_user = t3.userid
+			  and t1.community_id = t4.communityId
+		<dynamic>
+			<isNotNull property="task_status" prepend="and">
+				t1.task_status = #task_status# 				
+			</isNotNull>			
+			<isNotNull property="send_user" prepend="and">
+				 t2.loginname = #send_user#
+			</isNotNull>
+			<isNotNull property="phone" prepend="and">
+				 t2.phone = #phone#
+			</isNotNull>
+			<isNotNull property="task_cid" prepend="and">
+				t1.community_id = #task_cid#
+			</isNotNull>
+			<isNotNull property="start_time" prepend="and">
+				t1.publish_time <![CDATA[>]]> #start_time#
+			</isNotNull>
+			<isNotNull property="end_time" prepend="and">
+				t1.publish_time <![CDATA[<]]> #end_time#
+			</isNotNull>
+			<isNotNull property="title" prepend="and">
+				 t1.task_title like '%$title$%'
+			</isNotNull>
+		</dynamic>	
+
+		order by publish_time desc  limit #begin#,#size#
+	</select>
+	
+	<select id="countTaskProperty" resultClass="int" parameterClass="taskQueryBean">
+		select 
+		     count(0)
+	    from task_property t1,
+	         user_login t2,
+	         user_baseinfo t3  
+	    where t1.send_user = t2.userid
+	  		  and t1.send_user = t3.userid
+			  
+		<dynamic>
+			<isNotNull property="task_status" prepend="and">
+				t1.task_status = #task_status# 				
+			</isNotNull>			
+			<isNotNull property="send_user" prepend="and">
+				 t2.loginname = #send_user#
+			</isNotNull>
+			<isNotNull property="phone" prepend="and">
+				 t2.phone = #phone#
+			</isNotNull>
+			<isNotNull property="task_cid" prepend="and">
+				t1.community_id = #task_cid#
+			</isNotNull>
+			<isNotNull property="start_time" prepend="and">
+				t1.publish_time <![CDATA[>]]> #start_time#
+			</isNotNull>
+			<isNotNull property="end_time" prepend="and">
+				t1.publish_time <![CDATA[<]]> #end_time#
+			</isNotNull>
+			<isNotNull property="title" prepend="and">
+				t1.task_title like '%$title$%'
+			</isNotNull>
+		</dynamic>	
+		
+	</select>
+	
+	<update id="updateTaskProperty" parameterClass="taskProperty">
+		update task_property
+			set task_id = #task_id# 
+			<dynamic>
+			<isNotNull property="task_status" prepend=",">
+			task_status = #task_status#
+			</isNotNull>
+			<isNotNull property="complete_time" prepend=",">
+			complete_time = #complete_time#
+			</isNotNull>
+			</dynamic>
+		where task_id = #task_id#  
+	</update>
+	
+	<select id="getTaskProperty" resultClass="taskProperty" parameterClass="int">
+		select t1.*,
+			   t2.nick as send_user_name,
+			   t2.phone as phone,
+			   t4.communityName as community,
+			   concat(t3.floor,'栋',t3.room, "室") as address
+	    from task_property t1,
+	         user_login t2,
+	         user_baseinfo t3,  
+	         community_base t4  
+	    where t1.task_id = #id#
+	    	  and t1.send_user = t2.userid
+	    	  and t1.send_user = t3.userid
+	    	  and t1.community_id = t4.communityId
+	</select>
+	
+	<!-- 物业公告查询 -->
+	<select id="propertyInfoList" parameterClass="map" resultClass="propertyInfo">
+		SELECT * FROM property_information WHERE createTime &gt; #start_time#  AND createTime &lt; #end_time# AND community_id = #community_id# ORDER BY createTime DESC limit #begin#,#size#
+	</select>
+	<!-- 物业公告查询 -->
+	<select id="propertyInfoListCount" parameterClass="map" resultClass="int">
+		SELECT COUNT(*) FROM property_information WHERE createTime &gt; #start_time#  AND createTime &lt; #end_time# AND community_id = #community_id#
+	</select>
+	
+	
+	<!-- 物业公告录入 -->
+	<insert id="propertyInfo_ADD" parameterClass="propertyInfo">
+		INSERT INTO property_information
+            (title,content,phone,landline,address,createTime,community_id,remarks)
+		VALUES (#title#,#content#,#phone#,#landline#,#address#,#createTime#,#community_id#,#remarks#)
+	</insert>
+	<!-- 物业公告信息编辑 -->
+	<update id="editPropertyInfo">
+		update property_information
+		set property_information_id = #property_information_id#
+		<dynamic>
+			<isNotNull property="title" prepend=",">
+				title = #title#
+			</isNotNull>
+			<isNotNull property="content" prepend=",">
+				content = #content#
+			</isNotNull>
+			<isNotNull property="phone" prepend=",">
+				phone = #phone#
+			</isNotNull>
+			<isNotNull property="landline" prepend=",">
+				landline = #landline#
+			</isNotNull>
+			<isNotNull property="address" prepend=",">
+				address = #address#
+			</isNotNull>
+			<isNotNull property="remarks" prepend=",">
+				remarks = #remarks#
+			</isNotNull>
+			
+			<isNotNull property="createTime" prepend=",">
+				createTime = #createTime#
+			</isNotNull>
+		</dynamic>
+		where property_information_id = #property_information_id#
+	</update>
+	
+	<!-- 查询编辑当前的一个PropertyInfo对象 显示在编辑页面-->
+	<select id="propertyInfoOne" parameterClass="int" resultClass="propertyInfo">
+		select * from property_information where property_information_id = #property_information_id#
+	</select>
+	<!--  -->
+	<delete id="delPropertyInfo" parameterClass="int">
+		DELETE FROM property_information WHERE property_information_id = #property_information_id#
+	</delete>
+
+    <sql id="searchServiceOrder_sql">
+        FROM SERVICE_ORDER so
+        INNER JOIN user_login ul ON so.user_id=ul.userid
+        INNER JOIN community_base cb ON so.community_id = cb.communityid
+        <dynamic prepend="where">
+            <isNotEmpty property="community_list" prepend="and">
+                so.community_id IN
+                <iterate property="community_list" open="(" close=")" conjunction=",">
+                    #community_list[]#
+                </iterate>
+            </isNotEmpty>
+            <isNotEmpty property="user_name" prepend="and">
+                ul.username like '%$user_name$%'
+            </isNotEmpty>
+            <isNotEmpty property="user_phone" prepend="and">
+                ul.phone = #user_phone#
+            </isNotEmpty>
+            <isNotEmpty property="service_name" prepend="and">
+                so.service_name like '%$service_name$%'
+            </isNotEmpty>
+            <isNotEmpty property="beginTime" prepend="and">
+                so.order_time <![CDATA[>=]]>  #beginTime#
+            </isNotEmpty>
+            <isNotEmpty property="endTime" prepend="and">
+                so.order_time <![CDATA[<]]> #endTime#
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+
+    <select id="searchServiceOrder" parameterClass="map" resultClass="hashmap">
+        SELECT so.*,ul.username,ul.phone, cb.communityname as community_name
+        <include refid="searchServiceOrder_sql"/>
+        ORDER BY so.community_id, so.user_id ASC Limit #begin# , #size#
+    </select>
+
+    <select id="searchServiceOrderCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchServiceOrder_sql"/>
+    </select>
+
+    <update id="editServiceOrder" parameterClass="hashmap">
+        UPDATE service_order set order_status = #order_status#, order_dec = #order_dec# WHERE order_id = #order_id#
+    </update>
+
+	<!-- 预约管理  -->
+	<select id="getService_order" parameterClass="map" resultClass="service_order">
+		<!--  SELECT * FROM SERVICE_ORDER WHERE COMMUNITY_ID = #community_id# -->
+		SELECT so.*,ul.username,ul.phone FROM SERVICE_ORDER so INNER JOIN user_login ul ON so.user_id=ul.userid WHERE COMMUNITY_ID = #community_id#
+		<dynamic>
+			<isNotNull property="user_name" prepend="and">
+				ul.username like '%$user_name$%'
+			</isNotNull>
+			<isNotNull property="user_phone" prepend="and">
+				ul.phone = #user_phone#
+			</isNotNull>
+			<isNotNull property="service_name" prepend="and">
+				so.service_name like '%$service_name$%'
+			</isNotNull>
+			<isNotNull property="beginTime" prepend="and">
+				so.order_time &gt; #beginTime#
+			</isNotNull>
+			<isNotNull property="endTime" prepend="and">
+				so.order_time &lt; #endTime#
+			</isNotNull>
+		</dynamic>
+		ORDER BY so.user_id ASC Limit #begin# , #size#
+	</select>
+	
+	<!-- 预约管理分页 -->
+	<select id="getService_order_count" parameterClass="map" resultClass="int">
+		SELECT COUNT(*) FROM SERVICE_ORDER WHERE COMMUNITY_ID = #community_id#
+		<dynamic>
+			<isNotNull property="name" prepend="and">
+				service_name like '%$name$%'
+			</isNotNull>
+			<isNotNull property="beginTime" prepend="and">
+				order_time &gt; #beginTime#
+			</isNotNull>
+			<isNotNull property="endTime" prepend="and">
+				order_time &lt; #endTime#
+			</isNotNull>
+		</dynamic>
+		ORDER BY USER_ID ASC
+	</select>
+	
+	<!-- 删除预约 -->
+	<delete id="delService_order" parameterClass="map">
+		DELETE FROM SERVICE_ORDER WHERE ORDER_ID = #order_id# AND USER_ID = #user_id#
+	</delete>
+	
+	<!-- 编辑页面查找 -->
+	<select id="getService_order_edit" parameterClass="int" resultClass="service_order">
+		SELECT so.*,ul.username,ul.phone FROM SERVICE_ORDER so INNER JOIN user_login ul ON so.user_id=ul.userid WHERE ORDER_ID = #order_id#
+	</select>
+
+    <select id="getServiceOrderById" parameterClass="int" resultClass="hashmap">
+        SELECT so.*,ul.username,ul.phone, cb.communityname as community_name
+        FROM SERVICE_ORDER so
+        INNER JOIN user_login ul ON so.user_id=ul.userid
+        INNER JOIN community_base cb ON so.community_id=cb.communityid
+        WHERE ORDER_ID = #order_id#
+    </select>
+	
+	<!-- 提交更新预约 -->
+	<update id="updataService_order" parameterClass="map">
+		UPDATE service_order SET 
+				  service_name = #service_name#,
+				  order_dec = #order_dec#,
+				  order_status = #order_status#
+				  <dynamic>
+				  	<isNotNull property="service_img" prepend=",">
+				  		service_img = #service_img#
+				  	</isNotNull>
+				  </dynamic>
+		where order_id = #order_id# and user_id = #user_id#
+	</update>
+</sqlMap>

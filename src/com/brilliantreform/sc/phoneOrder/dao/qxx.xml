@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="qxx">
+
+    <typeAlias alias="qxxMgruser" type="com.brilliantreform.sc.user.mgrpo.MgrUser"/>
+    <typeAlias alias="qxxOrder" type="com.brilliantreform.sc.order.cxy.po.Order"/>
+
+    <!-- 获取订单 未接单的数量 -->
+    <select id="getNotOrderCount" parameterClass="hashmap" resultClass="int">
+        SELECT COUNT(1)
+        FROM order_base ob
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        WHERE ob.order_status IN (1,2,22)
+        AND NOT EXISTS (SELECT * FROM delivery_detail dd WHERE dd.order_serial=ob.order_serial)
+        <isNotEmpty property="community_list" prepend="and">
+            (ob.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            OR ob.sub_cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            )
+        </isNotEmpty>
+    </select>
+
+    <!-- 获取订单 未接单列表 -->
+    <select id="getNotOrderList" parameterClass="hashmap" resultClass="hashmap">
+        SELECT ul.nick AS user_name,ul.phone AS
+        user_phone,ob.order_serial,ob.order_price,ob.order_time,ob.pay_type_ext,cb.communityName
+        FROM order_base ob
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        INNER JOIN community_base cb ON cb.communityid = ob.community_id
+        WHERE ob.order_status IN (1,2,22)
+        AND NOT EXISTS (SELECT * FROM delivery_detail dd WHERE dd.order_serial=ob.order_serial)
+        <isNotEmpty property="community_list" prepend="and">
+            (ob.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            OR ob.sub_cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            )
+        </isNotEmpty>
+        ORDER BY ob.order_time DESC
+        limit #begin#,#size#;
+    </select>
+
+    <!-- 详情 -->
+    <select id="orderXq" parameterClass="hashmap" resultClass="hashmap">
+        SELECT
+              *, ob.delivery_type AS dtype, ob.order_price AS order_price2,
+              (SELECT SUM(orp.refund_amount) AS refund_amount FROM order_refund_base orb,
+                order_refund_product orp
+                WHERE orb.objid = orp.refund_id
+                AND orb.removetag = 0 AND orb.return_status = 1 AND orb.order_serial = ob.order_serial) AS refund_amount,
+                (SELECT SUM(orb.refund_money) AS refund_money FROM order_refund_base orb WHERE
+                orb.removetag = 0 AND orb.return_status = 1 AND orb.order_serial = ob.order_serial) AS refund_money
+        FROM
+          order_product op
+          INNER JOIN order_base ob
+            ON ob.order_serial = op.order_serial
+          INNER JOIN user_login ul
+            ON ul.userid = ob.user_id
+         WHERE op.order_serial = #order_serial#;
+    </select>
+
+    <!-- 获取订单 待取货的数量 -->
+    <select id="getQuHuoOrderCount" parameterClass="hashmap" resultClass="int">
+        SELECT
+        COUNT(DISTINCT detail.order_serial)
+        FROM delivery_detail detail
+
+        LEFT JOIN (SELECT sum(refund_price) refund_price,order_serial FROM order_refund group by order_serial) orfsum ON
+        detail.order_serial=orfsum.order_serial
+
+        INNER JOIN delivery_product product on detail.distri_detail_id=product.distri_detail_id
+        LEFT JOIN order_refund orf on product.order_id=orf.order_id
+        INNER JOIN order_base ob on detail.order_serial=ob.order_serial
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        where detail.distri_staus=#distri_staus#
+        <isNotEmpty property="user_id" prepend="and">
+            detail.distri_worker_id = #user_id#
+        </isNotEmpty>
+        AND ob.order_status IN (1,2,22)
+        <isNotEmpty property="community_list" prepend="and">
+            (ob.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            OR ob.sub_cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            )
+        </isNotEmpty>
+    </select>
+    <!-- 获取订单 待取货的列表 -->
+    <select id="getQuHuoOrderList" parameterClass="hashmap" resultClass="hashmap">
+        SELECT ob.order_price AS order_price, ob.order_serial AS order_serial,
+        ul.nick AS nickName,
+        ul.phone AS phone, cb.communityName AS communityName, ob.order_time AS order_time,
+
+        (SELECT SUM(orp.refund_amount) AS refund_amount FROM order_refund_base orb,
+        order_refund_product orp
+        WHERE orb.objid = orp.refund_id
+        AND orb.removetag = 0 AND orb.return_status = 1 AND orb.order_serial = detail.order_serial) AS refund_amount,
+        (SELECT SUM(orb.refund_money) AS refund_money FROM order_refund_base orb WHERE
+        orb.removetag = 0 AND orb.return_status = 1 AND orb.order_serial = detail.order_serial) AS refund_money
+
+        FROM delivery_detail detail
+        LEFT JOIN (SELECT SUM(refund_price) refund_price,order_serial FROM order_refund GROUP BY order_serial) orfsum ON
+        detail.order_serial=orfsum.order_serial
+        INNER JOIN delivery_product product ON detail.distri_detail_id=product.distri_detail_id
+
+        INNER JOIN order_base ob ON detail.order_serial=ob.order_serial
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        INNER JOIN community_base cb ON cb.communityId = ob.community_id
+        WHERE detail.distri_staus=#distri_staus#
+        <isNotEmpty property="user_id" prepend="and">
+            detail.distri_worker_id = #user_id#
+        </isNotEmpty>
+        AND ob.order_status IN (1,2,22)
+        <isNotEmpty property="community_list" prepend="and">
+            (ob.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            OR ob.sub_cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            )
+        </isNotEmpty>
+        GROUP BY detail.order_serial
+        ORDER BY ob.order_time DESC
+        limit #begin#,#size#
+    </select>
+
+    <!-- 获取订单 配送中的数量 -->
+    <select id="getOrderDeliveryCount" parameterClass="hashmap" resultClass="int">
+        SELECT
+        COUNT(DISTINCT detail.order_serial)
+        FROM delivery_detail detail
+        LEFT JOIN (SELECT sum(refund_price) refund_price,order_serial FROM order_refund group by order_serial) orfsum ON
+        detail.order_serial=orfsum.order_serial
+        INNER JOIN delivery_product product on detail.distri_detail_id=product.distri_detail_id
+        LEFT JOIN order_refund orf on product.order_id=orf.order_id
+        INNER JOIN order_base ob on detail.order_serial=ob.order_serial
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        where detail.distri_staus=#distri_staus#
+        <isNotEmpty property="user_id" prepend="and">
+            detail.distri_worker_id = #user_id#
+        </isNotEmpty>
+        AND ob.order_status IN (1,2,22)
+        <isNotEmpty property="community_list" prepend="and">
+            (ob.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            OR ob.sub_cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            )
+        </isNotEmpty>
+    </select>
+    <!-- 获取订单 配送中的列表 -->
+    <select id="getDeliveryOrderList" parameterClass="hashmap" resultClass="hashmap">
+        SELECT ob.order_price AS order_price, ob.order_serial AS order_serial,
+        ul.loginname AS loginname,
+        ul.phone AS phone, cb.communityName AS communityName, ob.order_time AS order_time, ob.delivery_addr AS
+        delivery_addr,
+        (SELECT SUM(orp.refund_amount) AS refund_amount FROM order_refund_base orb,
+        order_refund_product orp
+        WHERE orb.objid = orp.refund_id
+        AND orb.removetag = 0 AND orb.return_status = 1 AND orb.order_serial = ob.order_serial) AS refund_amount,
+        (SELECT SUM(orb.refund_money) AS refund_money FROM order_refund_base orb WHERE
+        orb.removetag = 0 AND orb.return_status = 1 AND orb.order_serial = ob.order_serial) AS refund_money
+        FROM delivery_detail detail
+        LEFT JOIN (SELECT sum(refund_price) refund_price,order_serial FROM order_refund group by order_serial) orfsum ON
+        detail.order_serial=orfsum.order_serial
+        INNER JOIN delivery_product product on detail.distri_detail_id=product.distri_detail_id
+        LEFT JOIN order_refund orf on product.order_id=orf.order_id
+
+        INNER JOIN order_base ob on detail.order_serial=ob.order_serial
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        INNER JOIN community_base cb on cb.communityId = ob.community_id
+        where detail.distri_staus=#distri_staus#
+        <isNotEmpty property="user_id" prepend="and">
+            detail.distri_worker_id = #user_id#
+        </isNotEmpty>
+        AND ob.order_status IN (1,2,22)
+        <isNotEmpty property="community_list" prepend="and">
+            (ob.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            OR ob.sub_cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            )
+        </isNotEmpty>
+        GROUP BY detail.order_serial
+        ORDER BY ob.order_time DESC
+        limit #begin#,#size#
+    </select>
+    <!-- 获取订单 订单已完成数量 -->
+    <select id="getOrderFinishCount" parameterClass="hashmap" resultClass="int">
+        SELECT
+        COUNT(0)
+        FROM
+        order_base ob
+        INNER JOIN user_login ul on ul.userid = ob.user_id
+        INNER  JOIN delivery_detail detail ON detail.order_serial = ob.order_serial
+        WHERE ob.order_status = 3
+        <isNotEmpty prepend="and" property="user_id">
+            detail.distri_worker_id = #user_id#
+        </isNotEmpty>
+        <isNotEmpty property="community_list" prepend="and">
+            (ob.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            OR ob.sub_cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            )
+        </isNotEmpty>
+        AND ul.nick != 'POS' AND DATE(ob.order_time) = CURDATE()
+    </select>
+    <!-- 获取订单 订单已完成的列表 -->
+    <select id="getOrderFinishList" parameterClass="hashmap" resultClass="hashmap">
+        SELECT
+        *,ul.nick AS user_name,ul.phone AS user_phone,cb.communityName,ob.delivery_type,
+        (SELECT SUM(orp.refund_amount) AS refund_amount FROM order_refund_base orb,
+        order_refund_product orp
+        WHERE orb.objid = orp.refund_id
+        AND orb.removetag = 0 AND orb.return_status = 1 AND orb.order_serial = ob.order_serial) AS refund_amount,
+        (SELECT SUM(orb.refund_money) AS refund_money FROM order_refund_base orb WHERE
+        orb.removetag = 0 AND orb.return_status = 1 AND orb.order_serial = ob.order_serial) AS refund_money
+        FROM
+        order_base ob
+        INNER JOIN user_login ul on ul.userid = ob.user_id
+        INNER JOIN community_base cb ON cb.communityid = ob.community_id
+        INNER  JOIN delivery_detail detail ON detail.order_serial = ob.order_serial
+        WHERE ob.order_status = 3
+        <isNotEmpty prepend="and" property="user_id">
+            detail.distri_worker_id = #user_id#
+        </isNotEmpty>
+        <isNotEmpty property="community_list" prepend="and">
+            (ob.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            OR ob.sub_cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            )
+        </isNotEmpty>
+        AND DATE(ob.order_time) = CURDATE() AND ul.nick != 'POS' ORDER BY ob.order_time DESC limit #begin#,#size#
+    </select>
+
+    <!-- 获取称重 未称重的数量 -->
+    <select id="getNotWeighingCount" resultClass="int" parameterClass="hashmap">
+        SELECT COUNT(0) FROM user_cart uc
+        INNER JOIN user_login ul ON ul.userid = uc.user_id
+        INNER JOIN service_product sp ON uc.product_id = sp.product_id
+        INNER JOIN product_real_stock prs ON sp.product_id = prs.product_id
+        WHERE uc.status = 1 AND <![CDATA[ sp.tags&(1<<0) != 0]]> AND DATE(uc.createTime) = CURDATE()
+        <isNotEmpty property="community_list" prepend="and">
+            sp.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+        </isNotEmpty>
+    </select>
+    <!-- 获取称重 未称重的列表 -->
+    <select id="getNotWeighList" resultClass="hashmap" parameterClass="hashmap">
+        SELECT
+        uc.user_id user_id,
+        uc.product_id produc_tid,
+        ul.username,
+        ul.phone,
+        NAME product_name,
+        <![CDATA[IF((sp.tags&(1<<1) = 0),sp.price,sp.market_price) AS product_prict,]]>
+        prs.real_stock_sum,
+        sp.unit unit,
+        sp.createTime,
+        sp.tags,
+        cb.communityName
+        FROM
+        user_cart uc
+        INNER JOIN user_login ul ON ul.userid = uc.user_id
+        INNER JOIN service_product sp ON uc.product_id = sp.product_id
+        INNER JOIN community_base cb ON cb.communityid = sp.community_id
+        INNER JOIN product_real_stock prs ON sp.product_id = prs.product_id
+        WHERE uc.status = 1 AND <![CDATA[ sp.tags&(1<<0) != 0]]> AND DATE(uc.createTime) = CURDATE()
+        <isNotEmpty property="community_list" prepend="and">
+            sp.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+        </isNotEmpty>
+        ORDER BY uc.createTime DESC
+        limit #begin#,#size#
+    </select>
+    <!-- 获取称重 称重中的数量 -->
+    <select id="getWeighingCount" resultClass="int" parameterClass="hashmap">
+        SELECT COUNT(0) FROM user_cart uc
+        INNER JOIN user_login ul ON ul.userid = uc.user_id
+        INNER JOIN service_product sp ON uc.product_id = sp.product_id
+        INNER JOIN product_real_stock prs ON sp.product_id = prs.product_id
+        WHERE uc.status = 2 AND <![CDATA[ sp.tags&(1<<0) != 0]]> AND DATE(uc.createTime) = CURDATE()
+        <isNotEmpty property="community_list" prepend="and">
+            sp.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+        </isNotEmpty>
+    </select>
+    <!-- 获取称重 称重中列表 -->
+    <select id="getWeighingList" resultClass="hashmap" parameterClass="hashmap">
+        SELECT *,<![CDATA[IF((sp.tags&(sp.tags<<1) = 0),sp.price,sp.market_price) AS product_price]]>
+        FROM user_cart uc
+        INNER JOIN user_login ul ON ul.userid = uc.user_id
+        INNER JOIN service_product sp ON uc.product_id = sp.product_id
+        INNER JOIN community_base cb ON cb.communityid = sp.community_id
+        INNER JOIN product_real_stock prs ON sp.product_id = prs.product_id
+        WHERE uc.status = 2 AND <![CDATA[ sp.tags&(1<<0) != 0]]> AND DATE(uc.createTime) = CURDATE()
+        <isNotEmpty property="community_list" prepend="and">
+            sp.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+        </isNotEmpty>
+        ORDER BY uc.createTime DESC
+        limit #begin#,#size#
+    </select>
+    <!-- 获取称重 称重完成的数量 -->
+    <select id="getFinishWeighCount" resultClass="int" parameterClass="hashmap">
+        SELECT COUNT(0) FROM user_cart uc
+        INNER JOIN user_login ul ON ul.userid = uc.user_id
+        INNER JOIN service_product sp ON uc.product_id = sp.product_id
+        INNER JOIN product_real_stock prs ON sp.product_id = prs.product_id
+        WHERE uc.status = 3 AND <![CDATA[ sp.tags&(1<<0) != 0]]> AND DATE(uc.createTime) = CURDATE()
+        <isNotEmpty property="community_list" prepend="and">
+            sp.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+        </isNotEmpty>
+    </select>
+    <!-- 获取称重 称重完成列表 -->
+    <select id="getFinishWeighList" resultClass="hashmap" parameterClass="hashmap">
+        SELECT * FROM user_cart uc
+        INNER JOIN user_login ul ON ul.userid = uc.user_id
+        INNER JOIN service_product sp ON uc.product_id = sp.product_id
+        INNER JOIN community_base cb ON cb.communityid = sp.community_id
+        INNER JOIN product_real_stock prs ON sp.product_id = prs.product_id
+        WHERE uc.status = 3 AND <![CDATA[ sp.tags&(1<<0) != 0]]> AND DATE(uc.createTime) = CURDATE()
+        <isNotEmpty property="community_list" prepend="and">
+            sp.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+        </isNotEmpty>
+        ORDER BY ul.createTime DESC
+        limit #begin#,#size#
+    </select>
+
+    <!--根据openid查找mgr_user-->
+    <select id="selOpenidMgrUser" parameterClass="String" resultClass="hashMap">
+        select * from mgr_openid where openid = #openid#
+    </select>
+
+    <select id="selMgrUserByid" resultClass="qxxMgruser" parameterClass="int">
+        select * from mgr_user where user_id = #user_id#
+    </select>
+
+    <select id="getMgrUser" resultClass="qxxMgruser" parameterClass="String">
+        select * from mgr_user mu,mgr_user_community muc WHERE mu.user_id = muc.user_id and loginname=#loginname# limit 1
+    </select>
+    <!-- 提交称重-->
+    <update id="weighOk" parameterClass="hashMap">
+        update user_cart set
+        STATUS = 3 ,f_amount=#f_amount# where user_id=#user_id# and
+        product_id=#product_id#
+    </update>
+
+    <!-- 取消称重-->
+    <delete id="weighCancel" parameterClass="map">
+        delete from user_cart where user_id=#user_id# and product_id=#product_id#
+    </delete>
+
+    <update id="updateOrderProduct" parameterClass="String">
+        UPDATE order_product SET order_status = 3, delivery_time = now() WHERE order_serial = #order_serial#
+    </update>
+    <update id="updatehOrder" parameterClass="String">
+        UPDATE order_base SET order_status = 3,finish_time=NOW(), delivery_time = now() WHERE order_serial = #order_serial#
+    </update>
+    <update id="updatehDelivery_detail" parameterClass="String">
+        UPDATE delivery_detail SET distri_staus = 1 WHERE order_serial = #order_serial#
+    </update>
+    <parameterMap class="java.util.HashMap" id="swapParameters">
+        <parameter property="p_order_serial" javaType="java.lang.String" jdbcType="varchar" mode="IN"/>
+        <parameter property="p_distri_worker_id" javaType="java.lang.Integer" jdbcType="int" mode="IN"/>
+        <parameter property="p_distri_community_id" javaType="java.lang.Integer" jdbcType="int" mode="IN"/>
+        <parameter property="p_result_code" javaType="java.lang.Integer" jdbcType="int" mode="OUT"/>
+    </parameterMap>
+    <procedure id="acceptOrder" parameterMap="swapParameters">
+        <![CDATA[
+			{call p_deliver_acceptOrder(?,?,?,?)}
+   		]]>
+    </procedure>
+
+    <update id="finishOrder" parameterClass="phoneDistribean">
+        update delivery_detail
+        set distri_staus=1,
+        finish_time=NOW()
+        where distri_detail_id=#distri_detail_id#
+    </update>
+
+    <update id="updateOrderStatus" parameterClass="map">
+        update order_product op
+        INNER JOIN delivery_product dp on op.order_serial=dp.order_serial and op.order_id=dp.order_id
+        set op.order_status=#order_status#
+        where dp.distri_detail_id=#distri_detail_id#
+    </update>
+
+    <update id="finishOrderBase" parameterClass="hashmap">
+        update order_base ob
+        set ob.order_status=#order_status# , ob.finish_time= now()
+        where exists (select * from delivery_detail dd where ob.order_serial=dd.order_serial and dd.distri_detail_id=#distri_detail_id#)
+    </update>
+
+    <!-- 根据umgr_user的user_id 插入openid -->
+    <insert id="insertMgrUserOpenid" parameterClass="phoneMgruser">
+        INSERT into mgr_openid SET openid=#openid# , user_id=#user_id#
+        <selectKey resultClass="int" keyProperty="user_id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <select id="selorder_base" resultClass="hashmap" parameterClass="hashmap">
+        select * from order_base where order_serial = #order_serial#
+    </select>
+
+    <insert id="insertDelivery_address" parameterClass="hashmap">
+        INSERT INTO delivery_address (user_id,lnglatXY,address) VALUES (#user_id#,#lnglatXY#,#address#)
+        <selectKey keyProperty="address_id" resultClass="int">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="quHuoOK" parameterClass="String">
+        update delivery_detail set
+        distri_staus = 2 where order_serial = #order_serial#
+    </update>
+
+    <select id="selAMap" resultClass="hashmap" parameterClass="hashmap">
+        SELECT ob.delivery_addr,ul.phone,ob.order_serial,ul.nick
+        FROM delivery_detail detail
+        LEFT JOIN (SELECT sum(refund_price) refund_price,order_serial FROM order_refund group by order_serial) orfsum ON
+        detail.order_serial=orfsum.order_serial
+        INNER JOIN delivery_product product on detail.distri_detail_id=product.distri_detail_id
+        LEFT JOIN order_refund orf on product.order_id=orf.order_id
+        INNER JOIN order_base ob on detail.order_serial=ob.order_serial
+        INNER JOIN user_login ul ON ul.userid = ob.user_id
+        INNER JOIN community_base cb on cb.communityId = ob.community_id
+        where detail.distri_staus=#distri_staus#
+        AND ob.order_status IN (1,2,22)
+        <isNotEmpty property="community_list" prepend="and">
+            (ob.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            OR ob.sub_cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[].community_id#
+            </iterate>
+            )
+        </isNotEmpty>
+        GROUP BY detail.order_serial
+        ORDER BY ob.order_time DESC
+    </select>
+</sqlMap>

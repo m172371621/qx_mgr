@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="orderStatusLog">
+
+	<typeAlias alias="orderStatusLog" type="com.brilliantreform.sc.order.po.OrderStatusLog" />
+
+	<insert id="insertOrderStatusLog" parameterClass="orderStatusLog">
+		INSERT INTO order_status_log
+		(order_serial, old_status, new_status, user_id, create_time)
+		VALUES
+		(#order_serial#, #old_status#, #new_status#, #user_id#, #create_time#)
+		<selectKey resultClass="int" keyProperty="objid">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+	<update id="updateOrderStatusLog" parameterClass="orderStatusLog">
+		update order_status_log SET
+		order_serial = #order_serial#,
+		old_status = #old_status#,
+		new_status = #new_status#,
+		user_id = #user_id#,
+		create_time = #create_time#
+		where objid = #objid#
+	</update>
+
+</sqlMap>

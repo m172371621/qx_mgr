@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="wxqtj">
+    <typeAlias alias="weixinqxxtuijian" type="com.brilliantreform.sc.weixin.po.WeixinTuiJian"/>
+
+    <sql id="WeixinqxxTuiJianList">
+          FROM weixinqxx
+        <dynamic prepend=" where">
+            <isNotEmpty property="openid" prepend="and">
+                openid = #openid#
+            </isNotEmpty>
+            <isNotEmpty property="name" prepend="and">
+                name like CONCAT('%',#name#,'%')
+            </isNotEmpty>
+            <isNotEmpty property="phone" prepend="and">
+                phone like CONCAT('%',#phone#,'%')
+            </isNotEmpty>
+            <!--<isNotEmpty property="my_recommend_code" prepend="and">-->
+            <!--my_recommend_code = #my_recommend_code#-->
+            <!--</isNotEmpty>-->
+            <isNotEmpty property="state" prepend="and">
+                state = #state#
+            </isNotEmpty>
+            <isNotEmpty property="other_recommend_code" prepend="and">
+                other_recommend_code = #other_recommend_code#
+            </isNotEmpty>
+            <isNotEmpty property="nickname" prepend="and">
+                nickname like CONCAT('%',#nickname#,'%')
+            </isNotEmpty>
+            <isNotEmpty property="create_time" prepend="and">
+                create_time =  #create_time#
+            </isNotEmpty>
+            <isEqual property="my_recommend_code" compareValue="1"  prepend="and">
+                my_recommend_code != '' OR my_recommend_code != NULL
+            </isEqual>
+        </dynamic>
+        ORDER BY create_time DESC
+    </sql>
+    <select id="selWeixinqxxTuiJianList" resultClass="weixinqxxtuijian" parameterClass="hashmap">
+        select *
+       <include refid="WeixinqxxTuiJianList"/>
+
+        LIMIT #begin#,#size#
+    </select>
+
+    <select id="selWeixinqxxTuiJianListcount" resultClass="int" parameterClass="hashmap">
+        select count(1)
+        <include refid="WeixinqxxTuiJianList"/>
+    </select>
+
+    <select id="selWeixinqxxTuiJian" resultClass="weixinqxxtuijian" parameterClass="hashmap">
+        select *
+        <include refid="WeixinqxxTuiJianList"/>
+    </select>
+    <update id="updateWeixinqxxTuiJian" parameterClass="hashmap">
+        UPDATE weixinqxx set
+        <dynamic>
+            <isNotEmpty property="state">
+                state = #state#
+            </isNotEmpty>
+            <isNotEmpty property="my_recommend_code">
+                recommend_amount = recommend_amount+1
+            </isNotEmpty>
+        </dynamic>
+        <dynamic prepend="where">
+            <isNotEmpty property="openid">
+                openid=#openid#
+            </isNotEmpty>
+            <isNotEmpty prepend="phone" property="and">
+                phone=#phone#
+            </isNotEmpty>
+            <isNotEmpty prepend="name" property="and">
+                name = #name#
+            </isNotEmpty>
+            <isNotEmpty property="my_recommend_code">
+                my_recommend_code = #my_recommend_code#
+            </isNotEmpty>
+        </dynamic>
+    </update>
+
+</sqlMap>

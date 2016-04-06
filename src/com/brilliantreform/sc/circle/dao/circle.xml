@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="circle">
+
+	<typeAlias alias="circleFriend" type="com.brilliantreform.sc.circle.po.CircleFriend" />
+	<typeAlias alias="circleMedia" type="com.brilliantreform.sc.circle.po.CircleMedia" />
+	<typeAlias alias="circleReply" type="com.brilliantreform.sc.circle.po.CircleReply" />
+	<typeAlias alias="circleSaid" type="com.brilliantreform.sc.circle.po.CircleSaid" />
+	
+	<select id="getNeighbors" resultClass="circleFriend" parameterClass="map" >
+		select
+				t1.userid as user_id,
+				t1.loginname as user_name,
+				t2.avatar as user_pic,
+				t2.sex as user_sex,
+				t2.sign as user_sign,
+				t3.communityName as user_community
+		from 
+				user_login t1,
+				user_baseinfo t2,
+				community_base t3		
+		where
+				t1.userid = t2.userid 
+				and t2.communityId = t3.communityId
+				<dynamic>
+					<isNotNull property="key_word" prepend="and">
+						(t1.loginname like '%$key_word$%' or t1.phone like '%$key_word$%')
+					</isNotNull>
+					<isNotNull property="cid" prepend="and">
+						t2.communityId = #cid#
+					</isNotNull>
+				</dynamic>
+		limit 
+				#begin#,#size#;			
+	</select>
+	
+	<select id="getRelations" resultClass="int" parameterClass="map" >
+		SELECT
+			count(0)
+		FROM
+			circle_friend
+		WHERE
+			me_id = #me_id#
+		AND user_id = #user_id#
+		UNION ALL
+			SELECT
+				count(0)
+			FROM
+				circle_friend
+			WHERE
+				me_id = #user_id#
+			AND user_id = #me_id#
+	</select>
+	
+	<select id="countNeighbors" resultClass="int" parameterClass="int" >
+		select
+			count(0)
+		from 
+			user_baseinfo t2	
+		where
+			t2.communityId = #cid#			
+	</select>
+		
+	<insert id="addFriend" parameterClass="circleFriend">
+		INSERT INTO circle_friend
+			(me_id,user_id,createTime)
+		VALUES
+			(#me_id#,#user_id#,now())
+	</insert>
+	
+	<delete id="delFriend" parameterClass="map">
+		delete from circle_friend	
+		where 
+			 user_id = #user_id# and me_id = #me_id#
+	</delete>
+	
+	<select id="getFriend" resultClass="circleFriend" parameterClass="map" >
+		select
+				t1.userid as user_id,
+				t1.loginname as user_name,
+				t2.avatar as user_pic,
+				t2.sex as user_sex,
+				t2.sign as user_sign,
+				t3.communityName as user_community
+		from 
+				user_login t1,
+				user_baseinfo t2,
+				community_base t3,	
+				circle_friend t4
+		where
+				t4.me_id = #user_id#
+				and t1.userid = t4.user_id
+				and t1.userid = t2.userid 
+				and t2.communityId = t3.communityId
+		order by 
+				t4.createTime desc
+		limit 
+				#begin#,#size#
+					
+	</select>
+	
+	<select id="getWhosFriend" resultClass="circleFriend" parameterClass="map" >
+		select
+				t4.me_id as user_id,
+				t1.loginname as user_name,
+				t2.avatar as user_pic,
+				t2.sex as user_sex,
+				t2.sign as user_sign,
+				t3.communityName as user_community
+		from 
+				user_login t1,
+				user_baseinfo t2,
+				community_base t3,	
+				circle_friend t4
+		where
+				t4.user_id = #user_id#
+				and t4.me_id = t1.userid
+				and t4.me_id = t2.userid 
+				and t2.communityId = t3.communityId
+		order by 
+				t4.createTime desc
+		limit 
+				#begin#,#size#
+					
+	</select>
+	
+	<insert id="createSaid" parameterClass="circleSaid" >
+		INSERT INTO circle_said
+			(user_id,said_content,createTime)
+		VALUES
+			(#user_id#,#said_content#,now())
+		<selectKey resultClass="int" keyProperty="said_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<insert id="insertMedia" parameterClass="circleMedia">
+		INSERT INTO circle_media
+			(said_id,media_url,`order`,createTime)
+		VALUES
+			(#said_id#,#media_url#,#order#,now())
+	</insert>
+	
+	<delete id="delSaid" parameterClass="int">
+		delete from circle_said	
+		where 
+			 said_id = #said_id#
+	</delete>
+	
+	<delete id="delReply" parameterClass="int">
+		delete from circle_reply	
+		where 
+			 said_id = #said_id#
+	</delete>
+	
+	<delete id="delReplyById" parameterClass="int">
+		delete from circle_reply	
+		where 
+			 reply_id = #reply_id#
+	</delete>
+	
+	<delete id="delMedia" parameterClass="int">
+		delete from circle_media	
+		where 
+			 said_id = #said_id#
+	</delete>
+	
+	<insert id="createReply" parameterClass="circleReply">
+		INSERT INTO circle_reply
+			(said_id,comment_user_id,reply_user_id,comment_content,comment_type,createTime)
+		VALUES
+			(#said_id#,#comment_user_id#,#reply_user_id#,#comment_content#,#comment_type#,now())
+	</insert>
+	
+	<select id="getUserSaid" resultClass="circleSaid" parameterClass="map" >
+		select
+				t1.userid as user_id,
+				t1.loginname as user_name,
+				t2.avatar as user_pic,
+				t3.communityName as user_community,
+				t4.said_id as said_id,
+				t4.said_content as said_content,
+				DATE_FORMAT(t3.createTime,'%Y-%m-%d') as said_date,
+				t4.createTime as createTime
+		from 
+				user_login t1,
+				user_baseinfo t2,
+				community_base t3,	
+				circle_said t4
+		where
+				t4.user_id = #user_id#
+				and t4.user_id = t1.userid
+				and t1.userid = t2.userid 
+				and t2.communityId = t3.communityId
+		order by 
+				t4.createTime desc
+		limit 
+				#begin#,#size#
+					
+	</select>
+	
+	<select id="getFriendSaid" resultClass="circleSaid" parameterClass="map" >
+		select
+				t1.userid as user_id,
+				t1.loginname as user_name,
+				t2.avatar as user_pic,
+				t3.communityName as user_community,
+				t4.said_id as said_id,
+				t4.said_content as said_content,
+				DATE_FORMAT(t3.createTime,'%Y-%m-%d') as said_date,
+				t4.createTime as createTime
+		from 
+				user_login t1,
+				user_baseinfo t2,
+				community_base t3,	
+				circle_said t4,
+				circle_friend t5
+		where
+				t5.me_id = #user_id#
+				and t3.communityId = #cid#
+				and t4.user_id = t5.user_id
+				and t4.user_id = t1.userid
+				and t1.userid = t2.userid 
+				and t2.communityId = t3.communityId
+		order by 
+				t4.createTime desc
+		limit 
+				#begin#,#size#					
+	</select>
+	
+	<select id="getSaidMedia" resultClass="circleMedia" parameterClass="int" >
+		select
+				*
+		from 
+				circle_media t1
+		where
+				t1.said_id = #said_id#
+		order by 
+				t1.order
+	</select>
+	
+	<select id="getSaidReply" resultClass="circleReply" parameterClass="int" >
+		select
+				t1.userid as comment_user_id,
+				t1.loginname as comment_user,
+				t2.userid as reply_user_id,
+				t2.loginname as reply_user,
+				t3.comment_content as comment_content,
+				t3.comment_type as comment_type,
+				DATE_FORMAT(t3.createTime,'%Y-%m-%d') as comment_date,
+				t3.createTime as createTime
+		from 
+				user_login t1,
+				circle_reply t3
+		LEFT OUTER JOIN 
+				user_login t2 on t2.userid = t3.reply_user_id 
+		where
+				t1.userid = t3.comment_user_id 
+				and t3.said_id = #said_id#
+				and t3.comment_type != 1
+		order by 
+				t3.createTime desc	
+	</select>
+	
+	<select id="getSaidGood" resultClass="hashmap" parameterClass="int" >
+		select
+				t1.loginname as comment_user,
+				t1.userid as user_id
+		from 
+				user_login t1,
+				circle_reply t3
+		where
+				t1.userid = t3.comment_user_id 
+				and t3.said_id = #said_id#
+				and t3.comment_type = 1
+		order by 
+				t3.createTime desc	
+	</select>
+	
+	<select id="countReply" resultClass="int" parameterClass="int" >
+		select
+				count(0)
+		from 
+				circle_reply t3
+		where
+				t3.said_id = #said_id#
+	</select>
+	
+</sqlMap>

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="community">
+
+	<typeAlias alias="community" type="com.brilliantreform.sc.community.po.Community" />
+	<typeAlias alias="TreeNode" type="com.brilliantreform.sc.community.po.TreeNode"/>
+	<resultMap class="com.brilliantreform.sc.community.po.TreeNode" id="headNode">
+	    <result property="id" column="id"/>
+	    <result property="text" column="text"/>
+	    <result property="parent" column="parent"/>
+	</resultMap>
+	
+	<select id="getCommunityInfo" resultClass="community" parameterClass="int">
+		select t1.communityId as community_id,
+			   t1.communityName as community_name,
+			   t1.communityAddr as community_addr,
+			   t1.communityDesc as community_Dec,
+			   t1.propertyId as property_id,
+			   t2.propertyName as community_property,
+			   t2.propertyDesc as property_Dec			
+		from community_base t1,property_base t2
+		where t1.communityId = #id# and t1.propertyId = t2.propertyId limit 1;
+	</select>
+	
+	<select id="getCommunityList" resultClass="community">
+		select t1.communityId as community_id,
+			   t1.communityName as community_name,
+			   t1.communityAddr as community_addr,
+			   t1.communityDesc as community_Dec,
+			   t1.propertyId as property_id,
+			   t2.propertyName as community_property,
+			   t2.propertyDesc as property_Dec,
+			   t1.*
+		from community_base t1
+		LEFT JOIN property_base t2 ON t1.propertyId = t2.propertyId ;
+	</select>
+    <select id="getOrgList" resultMap="headNode" parameterClass="java.util.Map">
+         SELECT DISTINCT cb.communityId id,cb.communityName text,cb.org_info_pid parent FROM community_base cb
+         INNER JOIN mgr_user_community msc ON (cb.communityId=msc.community_id OR FIND_IN_SET(cb.communityId,queryChildren(msc.community_id)))
+         WHERE msc.user_id=#user_id#
+    </select>
+
+    <select id="getAdminOrgList" resultMap="headNode">
+        SELECT DISTINCT cb.communityId id,cb.communityName text,cb.org_info_pid parent FROM community_base cb
+    </select>
+    
+    <select id="getOrgDetail" resultClass="community" parameterClass="java.util.Map">
+         SELECT t1.communityId as community_id,
+			   t1.communityName as community_name,
+			   t1.communityAddr as community_addr,
+			   t1.communityDesc as community_Dec,
+			   t1.propertyId as property_id,
+			   t1.org_info_type,
+			   t1.org_info_area,
+			   t1.org_info_person,
+			   t1.org_info_phone,
+			   t1.org_info_location
+			    FROM community_base t1
+         WHERE communityId=#community_id#
+    </select>
+    <insert id="insertCommunity" parameterClass="community">
+         INSERT INTO community_base(communityName,communityAddr,org_info_type,org_info_person,org_info_location,org_info_pid,org_info_phone,status)
+         VALUES(#community_name#,#community_addr#,#org_info_type#,#org_info_person#,#org_info_location#,#org_info_pid#,#org_info_phone#,1)
+    </insert>
+    <update id="updateCommunity" parameterClass="community">
+         UPDATE community_base
+         SET communityId=#community_id#
+         <isNotNull property="community_name" open=",">
+             communityName=#community_name#
+         </isNotNull>
+         <isNotNull property="community_addr" open=",">
+             communityAddr=#community_addr#
+         </isNotNull>
+         <isNotNull property="org_info_type" open=",">
+             org_info_type=#org_info_type#
+         </isNotNull>
+         <isNotNull property="org_info_area" open=",">
+             org_info_area=#org_info_area#
+         </isNotNull>
+         <isNotNull property="org_info_person" open=",">
+             org_info_person=#org_info_person#
+         </isNotNull>
+         <isNotNull property="org_info_phone" open=",">
+             org_info_phone=#org_info_phone#
+         </isNotNull>
+         <isNotNull property="org_info_location" open=",">
+             org_info_location=#org_info_location#
+         </isNotNull>
+         <isNotNull property="org_info_pid" open=",">
+             org_info_pid=#org_info_pid#
+         </isNotNull>
+         WHERE communityId=#community_id#   
+    </update>
+
+    <select id="findCommunityByParent" parameterClass="int" resultClass="community">
+        SELECT *, communityId as community_id, communityName as community_name FROM community_base WHERE org_info_pid = #pid#
+    </select>
+
+    <select id="getCommunityById" parameterClass="int" resultClass="community">
+        SELECT *, communityId as community_id, communityName as community_name
+        FROM community_base WHERE communityid = #community_id#
+    </select>
+    
+    <select id="findCommunityTree" resultClass="hashmap">
+        SELECT CONCAT('c', communityid) as id, communityname as name, CONCAT('c', IFNULL(org_info_pid, 0)) as pId FROM community_base
+    </select>
+
+    <select id="findSecondUserCommunity" parameterClass="int" resultClass="hashmap">
+        SELECT DISTINCT cb.communityId community_id, cb.communityName community_name, cb.org_info_type FROM community_base cb
+         INNER JOIN mgr_user_community msc ON (cb.communityId=msc.community_id OR FIND_IN_SET(cb.communityId,queryChildren(msc.community_id)))
+         WHERE msc.user_id=#user_id#
+    </select>
+
+    <select id="findSecondAdminCommunity" resultClass="hashmap">
+        SELECT cb.communityId community_id, cb.communityName community_name, cb.org_info_type FROM community_base cb
+    </select>
+
+    <select id="getTotalCommunity" resultClass="community">
+        SELECT communityid as community_id, communityname as community_name, t.* FROM community_base t WHERE org_info_type = 1 limit 1
+    </select>
+</sqlMap>

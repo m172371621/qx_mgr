@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="config_community">
+	<typeAlias alias="config" type="com.brilliantreform.sc.confgure.po.Config_community"/>
+	<select id="getConfig_communityList" resultClass="config" parameterClass="map">
+		<![CDATA[
+			select * from config_community where community_id = #community_id# and config_id like '%$config_id$%' limit #begin# , #size#
+		]]>
+	</select>
+	
+	<select id="getConfig_communityCount" resultClass="int" parameterClass="int">
+		<![CDATA[
+			select count(*) from config_community where community_id = #community_id#
+		]]>
+	</select>	
+	
+	<delete id="config_CommunityDel" parameterClass="map">
+		<![CDATA[
+			delete from config_community  where config_id = #config_id# and community_id = #community_id#
+		]]>
+	</delete>
+	
+	<select id="selConfig_community" parameterClass="map" resultClass="config">
+		<![CDATA[
+			select * from config_community where config_id = #config_id# and community_id = #community_id#
+		]]>
+	</select>
+	
+	<update id="config_CommunityUpdata" parameterClass="config">
+		<![CDATA[
+			update config_community set
+		  		config_value = #config_value#,
+			  	config_dec = #config_dec#,
+				config_ext1 = #config_ext1#,
+				config_ext2 = #config_ext2#,
+			    config_ext3 = #config_ext3#,
+				createTime = #createTime#
+			where config_id = #config_id# and community_id=#community_id#
+		]]>
+	</update>
+	
+	<insert id="config_CommunityInsert" parameterClass="config">
+		INSERT INTO config_community
+	            (config_id,
+	             config_value,
+	             config_dec,
+	             community_id,
+	             config_ext1,
+	             config_ext2,
+	             config_ext3,
+	             createTime)
+		VALUES (#config_id#,
+		        #config_value#,
+		        #config_dec#,
+		        #community_id#,
+		        #config_ext1#,
+		        #config_ext2#,
+		        #config_ext3#,
+		        #createTime#)
+	</insert>
+</sqlMap>	

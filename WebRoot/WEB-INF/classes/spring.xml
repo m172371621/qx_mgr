@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:mvc="http://www.springframework.org/schema/mvc"
+	   xmlns:tx="http://www.springframework.org/schema/tx" xmlns:task="http://www.springframework.org/schema/task"
+	   xmlns:cache="http://www.springframework.org/schema/cache"
+	xsi:schemaLocation="
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-3.1.xsd
+http://www.springframework.org/schema/aop 
+http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+http://www.springframework.org/schema/tx 
+http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
+http://www.springframework.org/schema/task
+http://www.springframework.org/schema/task/spring-task-3.1.xsd
+http://www.springframework.org/schema/mvc
+http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+http://www.springframework.org/schema/cache
+http://www.springframework.org/schema/cache/spring-cache.xsd
+">
+
+
+	<mvc:annotation-driven />
+	<!-- service包(自动注入) -->
+	<context:component-scan base-package="com.brilliantreform.sc" />
+
+	<!-- 支持缓存注解 -->
+	<cache:annotation-driven cache-manager="cacheManager" />
+
+	<!--  缓存  属性-->
+	<bean id="cacheManagerFactory" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+		<property name="configLocation"  value="classpath:ehcache.xml" />
+		<property name="shared" value="true"/>
+	</bean>
+
+	<!-- 默认是cacheManager -->
+	<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager">
+		<property name="cacheManager"  ref="cacheManagerFactory"/>
+	</bean>
+
+	<!-- 引入属性文件 -->
+	<context:property-placeholder location="classpath:config.properties" />
+
+
+	<bean id="schedulerFactoryBean"
+		  class="org.springframework.scheduling.quartz.SchedulerFactoryBean" />
+
+
+	<bean id="dataSource" class="org.logicalcobwebs.proxool.ProxoolDataSource">
+		<property name="alias" value="SC"></property>
+		<property name="user" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="driver" value="${jdbc.driver}" />
+		<property name="driverUrl" value="${jdbc.url}" />
+
+		<property name="prototypeCount" value="10"></property>
+		<property name="maximumConnectionCount" value="200"></property>
+		<property name="minimumConnectionCount" value="20"></property>
+		<property name="simultaneousBuildThrottle" value="200"></property>
+		<property name="houseKeepingTestSql" value="select CURRENT_DATE"></property>
+	</bean>
+
+	<bean id="sqlMap" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation">
+			<value>classpath:sqlMap.xml</value>
+		</property>
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientTemplate">
+		<property name="sqlMapClient" ref="sqlMap" />
+	</bean>
+
+
+
+
+	<bean id="dataSourceATransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<tx:advice id="transactionManagerAdivice" transaction-manager="dataSourceATransactionManager">
+		<tx:attributes>
+			<tx:method name="commit*" propagation="REQUIRED" rollback-for="Exception" isolation="SERIALIZABLE" />
+			<tx:method name="add*" propagation="REQUIRED" rollback-for="Exception" isolation="SERIALIZABLE" />
+			<tx:method name="remove*" propagation="REQUIRED" rollback-for="Exception" isolation="SERIALIZABLE" />
+			<tx:method name="modify*" propagation="REQUIRED" rollback-for="Exception" isolation="SERIALIZABLE" />
+			<tx:method name="batch*" propagation="REQUIRED" rollback-for="Exception" isolation="SERIALIZABLE" />
+			<tx:method name="*" propagation="SUPPORTS" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut id="dataSourceAPointcut" expression="execution(* com.brilliantreform.sc.service..*.*(..))" />
+		<aop:advisor advice-ref="transactionManagerAdivice" pointcut-ref="dataSourceAPointcut" />
+	</aop:config>
+
+ 	<bean id="multipartResolver"
+       class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- set the max upload size100MB -->
+        <property name="maxUploadSize">
+        <value>104857600</value>
+    </property>
+    <property name="maxInMemorySize">
+        <value>4096</value>
+    </property>
+   </bean>
+
+    <bean id="myFilter" class="com.brilliantreform.sc.system.filter.SessionFilter"></bean>
+    <bean class="com.brilliantreform.sc.system.SpringContextHolder" lazy-init="false" />
+
+</beans>

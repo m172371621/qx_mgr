@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="msg_info">
+    <!-- 添加待发送信息 -->
+    <insert id="addMsgInfo" parameterClass="com.brilliantreform.sc.order.po.MsgInfo">
+        INSERT INTO msg_info(msg_template_code,msg_info_phone,msg_info_detail)
+        VALUES(#msg_template_code#,#msg_info_phone#,#msg_info_detail#)
+        <selectKey resultClass="java.lang.Integer">
+            select row_count()
+        </selectKey>
+    </insert>
+    
+</sqlMap>

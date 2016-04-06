@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="distri">
+<typeAlias alias="distribean" type="com.brilliantreform.sc.distri.po.DistriOrderBean"/>
+    <resultMap class="com.brilliantreform.sc.distri.po.DistriOrderBean" id="orderProductMap">
+        <result property="order_serial" column="order_serial"/>
+        <result property="product_id" column="product_id"/>
+        <result property="product_amount" column="product_amount"/>
+        <result property="product_name" column="product_name"/>
+        <result property="product_price" column="product_price"/>
+    </resultMap>
+    <resultMap class="com.brilliantreform.sc.distri.po.DistriOrderBean" id="orderDetailMap" groupBy="order_serial">
+        <result property="distri_detail_id" column="distri_detail_id"/>
+        <result property="order_serial" column="order_serial"/>
+         <result property="order_price" column="order_price"/>
+        <result property="pay_staus" column="pay_staus"/>
+        <result property="remark" column="remark"/>
+        <result property="distri_staus" column="distri_staus"/>
+        <result property="subList" resultMap="distri.orderProductMap"/>
+    </resultMap>
+    <resultMap class="com.brilliantreform.sc.distri.po.DistriOrderBean" id="orderHeadMap" groupBy="phone">
+        <result property="distri_num" column="distri_num"/>
+        <result property="nickName" column="nickName"/>
+        <result property="phone" column="phone"/>
+        <result property="addr" column="addr"/>
+        <result property="detailList" resultMap="distri.orderDetailMap"/>
+    </resultMap>
+    <select id="getDistriList" resultClass="distribean" parameterClass="map">
+       select head.*,product.productCount from distri_head head
+       inner join (SELECT distri_num,count(*) productCount from distri_product GROUP BY distri_num ) product on head.distri_num=product.distri_num
+       where 1=1
+       <isNotNull property="create_time" open="and">
+         DATE_FORMAT(head.create_time,'%Y-%m-%d')=#create_time#
+       </isNotNull>
+       <isNotNull property="distri_num" open="and">
+         head.distri_num like CONCAT('%',#distri_num#,'%')
+       </isNotNull>
+       <isNotNull property="distri_community_id" open="and">
+         head.distri_community_id=#distri_community_id#
+       </isNotNull>
+       <isNotNull property="distri_worker_id" open="and">
+         head.distri_worker_id=#distri_worker_id#
+       </isNotNull>
+       order by head.distri_head_status,head.create_time desc
+       limit #start#,#size#
+    </select>
+    <select id="getDistriCount" resultClass="java.lang.Integer" parameterClass="map">
+        select count(*) from distri_head
+       where 1=1
+       <isNotNull property="create_time" open="and">
+         DATE_FORMAT(create_time,'%Y-%m-%d')=#create_time#
+       </isNotNull>
+       <isNotNull property="distri_num" open="and">
+         distri_num like CONCAT('%',#distri_num#,'%')
+       </isNotNull>
+       <isNotNull property="distri_worker_id" open="and">
+         distri_worker_id=#distri_worker_id#
+       </isNotNull>
+    </select>
+    <select id="getDistriDetail" resultMap="orderHeadMap" parameterClass="map">
+       SELECT
+	   detail.*,product.distri_product_id,product.product_id,product.product_name,product.product_amount,product.product_price,detail.distri_staus,product.order_id
+       FROM distri_detail detail
+       INNER JOIN distri_product product on detail.distri_detail_id=product.distri_detail_id
+       where 1=1
+       <isNotNull property="distri_num" open="and">
+         detail.distri_num=#distri_num#
+       </isNotNull>
+       <isNotNull property="distri_staus" open="and">
+         detail.distri_staus=#distri_staus#
+       </isNotNull>
+       limit #start#,#size#
+    </select>
+    <select id="getDistriDetailExecel" resultClass="distribean" parameterClass="map">
+       SELECT
+	   detail.*,product.distri_product_id,product.product_id,product.product_name,product.product_amount,product.product_price,detail.distri_staus,product.order_id
+       FROM distri_detail detail
+       INNER JOIN distri_product product on detail.order_serial=product.order_serial
+       where 1=1
+       <isNotNull property="distri_num" open="and">
+         detail.distri_num=#distri_num#
+       </isNotNull>
+       <isNotNull property="distri_staus" open="and">
+         detail.distri_staus=#distri_staus#
+       </isNotNull>
+       limit #start#,#size#
+    </select>
+    <select id="getDistriDetailCount" resultClass="java.lang.Integer" parameterClass="map">
+       select count(*) from distri_detail detail
+       INNER JOIN order_product product ON detail.order_serial = product.order_serial
+       where 1=1
+       <isNotNull property="distri_num" open="and">
+         detail.distri_num=#distri_num#
+       </isNotNull>
+    </select>
+    <select id="optDistri" parameterClass="distribean">
+        update distri_head
+        set 
+        <isNotNull property="distri_worker_id" open=",">
+           distri_worker_id=#distri_worker_id#
+        </isNotNull>
+           distri_head_status=#distri_head_status#
+        <isNotNull property="finish_time" open=",">
+           finish_time=#finish_time#
+        </isNotNull>
+        where distri_num=#distri_num#
+        
+    </select>
+    <update id="optDistriDetail" parameterClass="distribean">
+       update distri_detail
+       set 
+           distri_staus=#distri_staus#
+       <isNotNull property="phone" open=",">
+           phone=#phone#
+        </isNotNull>
+        <isNotNull property="addr" open=",">
+           addr=#addr#
+        </isNotNull>
+        where phone=#phone#
+          and distri_num=#distri_num#
+    </update>
+    <insert id="insertDistri" parameterClass="distribean" >
+       insert into distri_head(distri_num,distri_worker_id,distri_head_status,distri_community_id)
+       values(#distri_num#,#distri_worker_id#,#distri_head_status#,#distri_community_id#)
+       <selectKey resultClass="int" keyProperty="distri_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+    </insert>
+    <insert id="insertDistriDetail" parameterClass="map">
+       insert into distri_detail(distri_num,order_serial,nickName,phone,addr,order_price,pay_staus)
+       SELECT DISTINCT #distri_num#, op.order_serial,ul.nick,ul.phone,op.delivery_addr,op.order_price,op.pay_type from order_product op
+       LEFT JOIN user_login ul on op.user_id=ul.userid
+       LEFT JOIN user_baseinfo ub on op.user_id=ub.userid
+       where op.order_status in (1,2,11,12,22)
+         and not EXISTS (SELECT * from distri_detail where order_serial=op.order_serial)
+       <isNotNull property="order_time_begin" open="and">
+          DATE_FORMAT(order_time,'%Y-%m-%d') &gt;= #order_time_begin#
+       </isNotNull>
+       <isNotNull property="order_time_end" open="and">
+          DATE_FORMAT(order_time,'%Y-%m-%d') &lt;= #order_time_end#
+       </isNotNull>
+       <isNotNull property="communityId" open="and">
+          op.community_id=#communityId#
+       </isNotNull>
+       limit #start#,#size#
+       <selectKey resultClass="int">
+			SELECT count(*) from distri_detail where distri_num=#distri_num#
+		</selectKey>
+    </insert>
+    <select id="getDetailCountByNum" parameterClass="map" resultClass="java.lang.Integer">
+        SELECT count(*) from distri_detail where distri_num=#distri_num#
+    </select>
+    <insert id="insertDetailDelTemp" parameterClass="map">
+        insert into distri_detail(distri_num,order_serial,nickName,phone,addr,order_price,pay_staus,distri_staus)
+        select DISTINCT #distri_num#,detail.order_serial,detail.nickName,detail.phone,detail.addr,detail.order_price,detail.pay_staus,detail.distri_staus
+        from distri_detail detail 
+        inner join distri_head head on detail.distri_num=head.distri_num
+        where detail.distri_staus !=2
+          and head.distri_worker_id=#distri_worker_id#
+    </insert>
+    <insert id="insertProductDelTemp" parameterClass="map">
+        insert into distri_product(distri_num,order_serial,product_id,product_name,product_amount,product_price,order_id)
+        select DISTINCT #distri_num#,product.order_serial,product.product_id,product.product_name,product.product_amount,product.product_price,product.order_id
+        from distri_product product
+        inner join distri_detail detail on detail.distri_detail_id=product.distri_detail_id
+        inner join distri_head head on detail.distri_num=head.distri_num 
+        where detail.distri_staus!=2 and head.distri_worker_id=#distri_worker_id#
+    </insert>
+    <insert id="insertDistriProduct" parameterClass="map">
+        insert into distri_product(distri_num,order_serial,product_id,product_name,product_amount,product_price,order_id,distri_detail_id)
+        select distinct detail.distri_num,detail.order_serial,op.product_id,sp.name  product_name,op.product_amount,op.product_price,op.order_id,detail.distri_detail_id
+        from distri_detail detail
+        inner join order_product op on detail.order_serial=op.order_serial
+        INNER JOIN service_product sp on op.product_id=sp.product_id
+        where distri_num=#distri_num#
+    </insert>
+    <update id="updateOrderStatus" parameterClass="map">
+        update order_product
+        set order_status=#order_status#
+        where exists(select * from distri_detail where order_serial=order_product.order_serial and distri_num=#distri_num#)
+        <isNotNull property="order_serial" open="and">
+           order_serial=#order_serial#
+        </isNotNull>
+    </update>
+    <insert id="insertDistriWorker" parameterClass="distribean">
+        insert into distri_worker(distri_worker_name,distri_worker_phone,distri_worker_addr,distri_worker_status)
+        values(#distri_worker_name#,#distri_worker_phone#,#distri_worker_addr#,#distri_worker_status#)
+        <selectKey resultClass="int" keyProperty="user_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+    </insert>
+    <select id="getDistriWorker" resultClass="distribean" parameterClass="map">
+        select * from distri_worker
+        where distri_community_id=#distri_community_id#
+          and distri_worker_status=0
+    </select>
+    <select id="getSerialByPhone" parameterClass="map" resultClass="distribean">
+        select * from distri_detail
+        where distri_num=#distri_num#
+          and phone=#phone#
+    </select>
+    
+    <select id="distr_work_list" parameterClass="map" resultClass="hashmap">
+    	select * from distri_worker
+    	<dynamic prepend="where">
+	    	<isNotEmpty prepend="and" property="Community_id">
+	    		distri_community_id = #Community_id#
+	    	</isNotEmpty>
+	    	<isNotEmpty prepend="and" property="worker_name">
+	    		distri_worker_name like '%$worker_name$%'
+	    	</isNotEmpty>
+    	</dynamic>
+    	limit $begin$,$size$
+    </select>
+    
+    
+    <select id="distr_work_count" parameterClass="map" resultClass="int">
+    	select count(0) from distri_worker
+    	<dynamic prepend="where">
+	    	<isNotEmpty prepend="and" property="Community_id">
+	    		distri_community_id = #Community_id#
+	    	</isNotEmpty>
+	    	<isNotEmpty prepend="and" property="worker_name">
+	    		distri_worker_name like '%$worker_name$%'
+	    	</isNotEmpty>
+    	</dynamic>
+    </select>
+    
+   <delete id="delete" parameterClass="int">
+   		delete from distri_worker  where distri_worker_id = #worker_id#;
+   </delete>
+   
+   <select id="get_id" parameterClass="int" resultClass="hashmap">
+   		select * from distri_worker where distri_worker_id = #worker_id#
+   </select>
+   
+   <update id="updata_Worker" parameterClass="distribean">
+   		update distri_worker set
+   		distri_community_id = #distri_community_id#,
+   		distri_worker_name = #distri_worker_name#,
+   		distri_worker_phone = #distri_worker_phone#,
+   		distri_worker_login_pwd = #distri_worker_loginpwd#,
+   		distri_worker_img = #distri_worker_img#
+   		where  distri_worker_id = #distri_worker_id#
+   </update>
+   
+   <insert id="insert_Worker" parameterClass="distribean">
+   		INSERT INTO distri_worker(
+   			 distri_community_id,
+   			 distri_worker_name,
+   			 distri_worker_phone,
+             distri_worker_login_name,
+             distri_worker_login_pwd)
+		VALUES (
+	        #distri_community_id#,
+	        #distri_worker_name#,
+	      	#distri_worker_phone#,
+	        #distri_worker_login_name#,
+	        #distri_worker_loginpwd#)
+	        <selectKey resultClass="int" keyProperty="distri_worker_id">
+	        	SELECT LAST_INSERT_ID()
+	        </selectKey>
+   </insert>
+</sqlMap>

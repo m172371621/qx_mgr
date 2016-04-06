@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="prize">
+    <typeAlias alias="cardNumConfig" type="com.brilliantreform.sc.activity.po.CardNumConfig" />
+    <typeAlias alias="prizeUser" type="com.brilliantreform.sc.activity.po.PrizeUser" />
+    <typeAlias alias="prizeInfo" type="com.brilliantreform.sc.activity.po.PrizeInfo" />
+
+    <sql id="searchPrizeLog_sql">
+        FROM prize_log t1, user_login t2, user_baseinfo t3, community_base t4
+        WHERE t1.user_id = t2.userid AND t2.userid = t3.userid AND t3.communityId = t4.communityId AND t1.prize_level != '未中奖'
+        <isNotEmpty property="community_list" prepend="and">
+            t3.communityId IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="phone" prepend="and">
+            t2.phone = #phone#
+        </isNotEmpty>
+        <isNotEmpty property="prize_level" prepend="and">
+            t1.prize_level = #prize_level#
+        </isNotEmpty>
+        <isNotEmpty property="nick" prepend="and">
+            t2.nick LIKE CONTACT('%', #nick#, '%')
+        </isNotEmpty>
+        <isNotEmpty property="start_time" prepend="and">
+            t1.createtime <![CDATA[>=]]> #start_time#
+        </isNotEmpty>
+        <isNotEmpty property="end_time" prepend="and">
+            t1.createtime <![CDATA[<]]> #end_time#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchPrizeLog" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.*, t4.communityname as community_name
+        <include refid="searchPrizeLog_sql"/>
+        ORDER BY t1.createtime DESC
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchPrizeLogCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchPrizeLog_sql"/>
+    </select>
+
+    <update id="acceptPrize" parameterClass="hashmap">
+        UPDATE prize_log SET status = 1, awardTime = now(), operatorName = #operatorName# WHERE log_id = #log_id# AND status = 0
+    </update>
+
+    <sql id="searchPrizeInfo_sql">
+        FROM prize_info t1, community_base t2
+        WHERE t1.cid = t2.communityid
+        AND t1.cid = #community_id#
+    </sql>
+
+    <select id="searchPrizeInfo" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.communityname as community_name
+        <include refid="searchPrizeInfo_sql"/>
+        ORDER BY t1.probability
+    </select>
+
+    <select id="searchPrizeInfoCount" resultClass="int" parameterClass="hashmap">
+        SELECT count(0)
+        <include refid="searchPrizeInfo_sql"/>
+    </select>
+
+    <select id="getPrizeInfo" resultClass="prizeInfo" parameterClass="hashmap">
+        SELECT * FROM prize_info WHERE cid = #community_id# AND prize_level = #prize_level#
+        <isNotEmpty property="prize_id" prepend="and">
+            prize_id != #prize_id#
+        </isNotEmpty>
+    </select>
+
+    <select id="getPrizeInfoById" resultClass="prizeInfo" parameterClass="int">
+        SELECT * FROM prize_info WHERE prize_id = #prize_id#
+    </select>
+    
+    <insert id="insertPrizeInfo" parameterClass="prizeInfo">
+        INSERT INTO prize_info
+        (probability, count, cid, prize_level, prize_name, prize_img, prize_dec, updatetime)
+        VALUES
+        (#probability#, #count#, #cid#, #prize_level#, #prize_name#, #prize_img#, #prize_dec#, #updatetime#)
+        <selectKey resultClass="int" keyProperty="prize_id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updatePrizeInfo" parameterClass="prizeInfo">
+        UPDATE prize_info SET
+        probability = #probability#,
+        count = #count#,
+        cid = #cid#,
+        prize_level = #prize_level#,
+        prize_name = #prize_name#,
+        prize_img = #prize_img#,
+        prize_dec = #prize_dec#,
+        updatetime = #updatetime#
+        WHERE prize_id = #prize_id#
+    </update>
+
+    <delete id="deletePrizeInfo" parameterClass="int">
+        DELETE FROM prize_info WHERE prize_id = #prize_id#
+    </delete>
+</sqlMap>

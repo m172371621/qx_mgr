@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="posTemp">
+
+	<typeAlias alias="Pos_order_temp_base" type="com.brilliantreform.sc.POS.po.Pos_order_temp_base" />
+	<typeAlias alias="Pos_order_temp_product" type="com.brilliantreform.sc.POS.po.Pos_order_temp_product" />
+	
+	<insert id="insertTempDataBase" parameterClass="Pos_order_temp_base">
+	     insert into pos_order_temp_base(community_id,order_price,create_by,url)
+	     values(#community_id#,#order_price#,#create_by#,#url#)
+	     <selectKey resultClass="java.lang.Integer">
+	         SELECT LAST_INSERT_ID()
+	     </selectKey>
+	</insert>
+	
+	<insert id="insertTempDataProduct" parameterClass="java.util.List">
+	     insert into pos_order_temp_product(order_temp_base_id,product_id,product_amount,product_price)
+	     values
+	      <iterate  conjunction ="," >   
+	     (#[].order_temp_base_id#,#[].product_id#,#[].product_amount#,#[].product_price#)
+	     </iterate>
+	</insert>
+
+</sqlMap>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="pwsearchBean">
+	<typeAlias alias="pwsearchBean" type="com.brilliantreform.sc.saleplugins.po.PwsearchBean" />
+	<typeAlias alias="pwmanager" type="com.brilliantreform.sc.saleplugins.po.Pwmanager" />
+			
+	<!-- 搜索商品 (根据商品名 模糊查) -->
+	<select id="getProductsList" parameterClass="string"
+		resultClass="pwsearchBean">
+		SELECT
+		uc.user_id user_id,
+		uc.product_id produc_tid,
+		name product_name,
+		price product_prict,
+		unit unit
+		FROM user_cart uc
+		INNER JOIN
+		service_product sp ON uc.product_id =
+		sp.product_id
+		WHERE uc.status = 2
+		and sp.tags&amp;1&lt;&lt;0=1
+		<dynamic>
+			<isNotNull property="value" open="and">
+				name like '%$value$%'
+			</isNotNull>
+		</dynamic>
+	</select>
+
+	<!-- 更新用户购物车状态  -->
+	<update id="user_cartUp" parameterClass="map">
+		update user_cart set
+		STATUS = 3 ,f_amount=#f_amount# where user_id=#user_id# and
+		product_id=#product_id#
+	</update>
+<!-- 称重商品管理列表 -->
+	<select id="pwmanagerList" resultClass="pwmanager" parameterClass="int">
+		SELECT
+		uc.user_id user_id,
+		uc.product_id produc_tid,
+		ul.username,
+		ul.phone,
+		NAME product_name,
+		<![CDATA[IF((sp.tags&(sp.tags<<1) = 0),sp.price,sp.market_price) AS product_prict,]]>
+		prs.real_stock_sum,
+		sp.unit unit,
+		sp.createTime,
+		sp.tags
+		FROM
+		user_cart uc
+		INNER JOIN user_login ul ON ul.userid = uc.user_id
+		INNER JOIN service_product sp ON uc.product_id = sp.product_id
+		INNER JOIN product_real_stock prs ON sp.product_id = prs.product_id
+		WHERE uc.status = 2 AND <![CDATA[ sp.tags&(1<<0) != 0]]> AND sp.community_id = #cid#
+		ORDER BY sp.createTime DESC ,ul.username DESC
+	</select>
+
+	<select id="pwmanagerTs" resultClass="pwmanager">
+		SELECT
+		uc.user_id user_id,
+		uc.product_id produc_tid,
+		ul.username,
+		ul.phone,
+		NAME product_name,
+		<![CDATA[IF((sp.tags&(sp.tags<<0) = 1),sp.price,sp.market_price) AS product_prict,]]>
+		prs.real_stock_sum,
+		sp.unit unit,
+		sp.createTime,
+		sp.tags
+		FROM
+		user_cart uc
+		INNER JOIN user_login ul ON ul.userid = uc.user_id
+		INNER JOIN service_product sp ON uc.product_id = sp.product_id
+		INNER JOIN product_real_stock prs ON sp.product_id = prs.product_id
+		WHERE uc.status = 2 AND <![CDATA[ sp.tags&(1<<0) != 0]]>
+		AND TIMESTAMPDIFF(SECOND,uc.updateTime,NOW()) BETWEEN 0 AND 10
+	</select>
+
+	<!-- 称重商品管理列表 数量-->
+	<select id="pwmanagerListcount" resultClass="int" parameterClass="int">
+		SELECT
+		COUNT(1)
+		FROM
+		user_cart uc
+		INNER JOIN user_login ul ON ul.userid = uc.user_id
+		INNER JOIN service_product sp ON uc.product_id = sp.product_id
+		INNER JOIN product_real_stock prs ON sp.product_id = prs.product_id
+		WHERE uc.status = 2 AND <![CDATA[ sp.tags&(1<<0) != 0]]> AND sp.community_id = #cid#
+		AND TIMESTAMPDIFF(SECOND,uc.updateTime,NOW()) BETWEEN 0 AND 5
+	</select>
+	
+	<update id="pwmanagerUp" parameterClass="map">
+		update user_cart set
+		STATUS = 3 ,f_amount=#f_amount# where user_id=#user_id# and
+		product_id=#product_id#
+	</update>
+	
+	<update id="pwmanagerCancel" parameterClass="map">
+		<!-- update user_cart set
+		STATUS = 1 where user_id=#user_id# and
+		product_id=#product_id#
+		 -->
+		 delete from user_cart where user_id=#user_id# and product_id=#product_id#
+	</update>
+</sqlMap>

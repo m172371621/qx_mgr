@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="stock">
+
+	<typeAlias alias="stocks" type="com.brilliantreform.sc.stock.po.TotalProduct" />
+
+	<select id="selstocks" resultClass="stocks">
+		<![CDATA[
+			SELECT * FROM SERVICE_PRODUCT_SUM
+		]]>
+	</select>
+
+	<!-- 分类 -->
+	<select id="inventory_classification" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT * FROM Inventory_classification
+		]]>
+	</select>
+
+	<!-- 根据 Inventory_classification id 查出 service_id -->
+	<select id="inventory_classification_id" parameterClass="int" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT SERVICE_ID ,SERVICE_NAME FROM Inventory_classification  WHERE INVENTORY_ID = #id#
+		]]>
+	</select>
+
+	<select id="shopingInfo" resultClass="java.util.HashMap" parameterClass="int">
+		<![CDATA[
+			SELECT * FROM service_product_sum WHERE SERVICE_ID = #num# 
+		]]>
+	</select>
+
+	<select id="service_base" resultClass="java.util.HashMap" parameterClass="int">
+		<![CDATA[
+			SELECT * FROM service_base
+		]]>
+		<dynamic prepend="where">
+			<isNotNull property="value">
+				community_id = #cid#
+			</isNotNull>
+		</dynamic>
+	</select>
+
+	<select id="getService_base_id" resultClass="int" parameterClass="map">
+		<![CDATA[
+			SELECT
+ 				 service_id
+			FROM
+				service_base
+		]]>
+		<dynamic prepend="where">
+			<isNotNull property="service_id" prepend="and">
+				service_id = #service_id#
+			</isNotNull>
+			<isNotNull property="community_id" prepend="and">
+				community_id = #community_id#
+			</isNotNull>
+		</dynamic>
+	</select>
+
+	<!-- 删除分类 -->
+	<delete id="delService_base" parameterClass="map">
+		delete from service_base
+		WHERE 
+		(service_id = #service_id# or parent_id=#service_id#)
+		
+		AND community_id = #community_id#
+	</delete>
+
+	<!-- 删除全部商品 -->
+	<delete id="delService_product_all" parameterClass="map">
+		delete from service_product
+        where exists(select * from service_product sp 
+        DELETE FROM service_product
+           WHERE service_id in (
+               SELECT service_id FROM service_base sb
+               WHERE (sb.service_id=#service_id# OR sb.parent_id=#service_id#)
+        )
+        AND community_id=#community_id#
+	</delete>
+
+	<!-- 删除商品 -->
+	<delete id="delService_product" parameterClass="map">
+		delete from service_product where product_id = #product_id# and
+		community_id=#community_id#
+	</delete>
+
+	<!-- 添加分类 -->
+	<insert id="addService_base" parameterClass="map">
+		<![CDATA[
+			INSERT INTO SERVICE_BASE(COMMUNITY_ID,I_SERVICE_ID,SERVICE_NAME) VALUES(#cid#,#i_service_id#,#service_name#)
+		]]>
+		<selectKey resultClass="int" keyProperty="service_id">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+	<!-- 检查小区商品分类有没有 -->
+	<select id="checkService_base" parameterClass="map" resultClass="int">
+		SELECT SERVICE_ID FROM SERVICE_BASE 
+		WHERE (I_SERVICE_ID = #i_service_id# OR service_name=#service_name#)
+		AND COMMUNITY_ID=#cid#
+	</select>
+
+	<!-- 检查小区商品信息有没有 -->
+	<select id="checkService_product" parameterClass="map" resultClass="int">
+		SELECT product_id FROM SERVICE_PRODUCT WHERE community_id=#cid# and (i_product_id = #i_product_id# OR name = #name#)
+	</select>
+
+	<!-- -->
+	<select id="getService_product_name" parameterClass="int" resultClass="string">
+		select name from service_product where i_product_id = #temp_id#
+	</select>
+
+	<select id="getI_service_id" parameterClass="int" resultClass="int">
+		select i_service_id from service_base where service_id = #service_id# limit 1
+	</select>
+
+	<!-- 添加商品信息 -->
+	<insert id="insertService_product" parameterClass="map">
+		INSERT INTO service_product(service_id,
+			i_product_id,
+			community_id,
+			product_type,
+			name,
+			picture,
+			thumbnail,
+			description_url,
+			description_pic,
+			description,
+			price,
+			market_price,
+			unit,
+			tags,
+			wholesale_price,
+			STATUS,
+			barcode,
+			createTime
+		)
+		SELECT IFNULL(sb.service_id,0),sps.product_id AS i_product_id,#cid#,product_type,sps.name,sps.picture,sps.thumbnail,sps.description_url
+            ,sps.description_pic,sps.description,sps.price,sps.market_price,
+		sps.unit,sps.tags,sps.wholesale_price,sps.STATUS,sps.barcode,NOW()
+		FROM service_product_sum sps
+		LEFT JOIN service_base sb on sb.i_service_id=#service_id# and sb.community_id = #cid#
+		WHERE product_id=#i_product_id#
+        <selectKey keyProperty="product_id" resultClass="int">
+            SELECT LAST_INSERT_ID();
+        </selectKey>
+	</insert>
+
+	<!-- 勾选分类却没有勾选商品 就把勾选的service_product_sum下的商品查出 -->
+	<select id="getService_product_sum" parameterClass="int" resultClass="java.util.HashMap">
+		SELECT * FROM SERVICE_PRODUCT_SUM WHERE SERVICE_ID = #id#
+	</select>
+
+	<!-- 更新商品的商品分类 -->
+	<update id="updata" parameterClass="map">
+		UPDATE SERVICE_PRODUCT SET service_id = #service_id# WHERE product_id = #product_id# and community_id = #cid#
+	</update>
+	
+	<update id="updateIServiceId" parameterClass="map">
+	    UPDATE service_base
+	    SET i_service_id=#i_service_id#
+	    WHERE service_id=#service_id#
+	</update>
+	
+	<update id="updateIProductId" parameterClass="map">
+	    UPDATE service_product
+	    SET i_product_id=#i_product_id#
+	    WHERE product_id=#product_id#
+	</update>
+
+	<select id="getService_Product_iservice_id" parameterClass="map" resultClass="java.util.HashMap">
+		select * from service_product where service_id = #service_id# and community_id = #cid#
+	</select>
+
+	<select id="selService_id" parameterClass="map" resultClass="int">
+		select service_id from service_base where i_service_id = #i_service_id# and
+		service_name=#service_name# and community_id = #cid# limit 1
+	</select>
+
+	<!-- ////////////////////////////////////////////////////////////////////// -->
+	<insert id="insertService_base" parameterClass="map">
+		<![CDATA[
+			INSERT INTO service_base (community_id,i_service_id,service_name,service_dec,service_img,service_order,service_type,service_url,parent_id,`status`) 
+			SELECT #cid#,#service_id# AS i_service_id,ivca.service_name,ivca.service_dec,ivca.service_img,ivca.service_order,ivca.service_type,ivca.service_url,IFNULL(ivcb.service_id,LAST_INSERT_ID()),ivca.status
+			FROM inventory_classification ivca
+			LEFT JOIN service_base ivcb ON ivca.parent_id=ivcb.i_service_id and ivcb.community_id = #cid#
+			WHERE ivca.service_id = #service_id#
+		]]>
+		<selectKey keyProperty="service_id" resultClass="int">
+			SELECT LAST_INSERT_ID();
+		</selectKey>
+	</insert>
+</sqlMap>

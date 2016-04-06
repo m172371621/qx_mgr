@@ -1,0 +1,656 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="user">
+
+	<typeAlias alias="userInfo" type="com.brilliantreform.sc.user.po.UserInfo" />
+	<typeAlias alias="loginInfo" type="com.brilliantreform.sc.user.po.LoginInfo" />
+	<typeAlias alias="userFeature" type="com.brilliantreform.sc.user.po.UserFeature" />
+	<typeAlias alias="mgrUser" type="com.brilliantreform.sc.user.mgrpo.MgrUser" />
+	<typeAlias alias="service" type="com.brilliantreform.sc.service.po.ServiceVo" />
+	<typeAlias alias="community" type="com.brilliantreform.sc.community.po.Community" />
+	<typeAlias alias="role" type="com.brilliantreform.sc.user.mgrpo.Role" />
+	<typeAlias alias="right" type="com.brilliantreform.sc.user.mgrpo.Right" />
+	<typeAlias alias="relation" type="com.brilliantreform.sc.user.mgrpo.Relation" />
+	<typeAlias alias="usearchBean" type="com.brilliantreform.sc.user.mgrpo.UserSearchBean" />
+	
+	<select id="getUserInfo" resultClass="userInfo" parameterClass="int">
+		select t1.userid as userid,
+			   t1.loginname as loginname,
+			   t1.phone as phone,
+			   t1.nick as nick,
+			   t1.type as type,
+			   t1.authenticate as authenticate,
+			   t2.avatar as avatar,
+			   t1.email as email,
+			   t2.room as room,
+			   t2.floor as floor,
+			   t2.age as age,
+			   t2.sex as sex,
+			   t1.username as username,
+			   t2.interest as interest,
+			   t2.profession as profession,
+			   t1.authenticate as authenticate,
+			   t2.communityId as communityId,
+			   t3.communityName as communityName
+		from user_login t1,user_baseinfo t2,community_base t3
+		where t1.userid = #userid# and t1.userid = t2.userid and t2.communityId = t3.communityId limit 1;
+	</select>
+	
+	<select id="getInterest" resultClass="userFeature" >
+		select interestName as featureName from dicti_interest
+	</select>
+	
+	<select id="getProfession" resultClass="userFeature" >
+		select professionName as featureName from dicti_profession
+	</select>
+	
+	<select id="getUserByPhone" resultClass="loginInfo" parameterClass="string">
+		select *
+		from user_login
+		where phone = #phone#  limit 1;
+	</select>
+	
+	
+	<select id="getUserShowInfo" resultClass="loginInfo" parameterClass="int">
+		select t1.userid as userid,
+			   t1.loginname as loginname,
+			   t1.password as password,
+			   t1.type as type,
+			   t1.authenticate as authenticate,	
+			   t1.username as username,	
+			   t1.phone as phone,	
+			   t1.nick as nick
+		from user_login t1
+		where userid = #userid#  limit 1;
+	</select>
+	
+	<select id="getName" resultClass="string" parameterClass="string">
+		select loginname
+		from user_login t1
+		where loginname = #loginname# limit 1;
+	</select>
+	
+	<select id="getPhone" resultClass="string" parameterClass="string">
+		select phone
+		from user_login t1
+		where phone = #phone# limit 1;
+	</select>
+	
+	<select id="getCommunity" resultClass="string" parameterClass="string">
+		select phone
+		from user_login t1
+		where phone = #phone# limit 1;
+	</select>
+	
+	<insert id="insertLoginInfo" parameterClass="userInfo">
+		INSERT INTO user_login
+			(loginname, password, phone, type, nick, email,username,createTime)
+		VALUES
+			(#loginName#, #password#, #phone#, #type#, #nick#, #email#, #username#, now())
+		<selectKey resultClass="int" keyProperty="userId">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<insert id="insertBaseInfo" parameterClass="userInfo">
+		INSERT INTO user_baseinfo
+			(userid, avatar, room, floor, profession,interest, communityId,sub_cid,createTime)
+		VALUES
+			(#userId#, #avatar#, #room#, #floor#, #profession#, #interest#, #communityId#,#communityId#, now())
+	</insert>
+	
+	<update id="resetPassword" parameterClass="loginInfo">
+		UPDATE user_login SET
+			password = #password#
+		WHERE userid = #userId#
+	</update>
+	
+	<update id="updateLoginInfo" parameterClass="userInfo">
+		update user_login
+			set userId = userId 
+			<dynamic>
+			<isNotNull property="username" prepend=",">
+			username = #username#
+			</isNotNull>
+			<isNotNull property="nick" prepend=",">
+			nick = #nick#
+			</isNotNull>
+   			<isNotNull property="email" prepend=",">
+			email = #email#
+			</isNotNull>
+			</dynamic>
+		where userId = #userId#  
+	</update>
+    
+    <update id="updateUserInfo" parameterClass="userInfo">
+		update user_baseinfo
+			set userId = userId 
+			<dynamic>
+			<isNotNull property="communityId" prepend=",">
+			communityId = #communityId#
+			</isNotNull>
+			<isNotNull property="avatar" prepend=",">
+			avatar = #avatar#
+			</isNotNull>
+			<isNotNull property="age" prepend=",">
+			age = #age#
+			</isNotNull>
+			<isNotNull property="sex" prepend=",">
+			sex = #sex#
+			</isNotNull>
+			<isNotNull property="room" prepend=",">
+			room = #room#
+			</isNotNull>
+   			<isNotNull property="floor" prepend=",">
+			floor = #floor#
+			</isNotNull>
+			<isNotNull property="interest" prepend=",">
+			interest = #interest#
+			</isNotNull>
+			<isNotNull property="profession" prepend=",">
+			profession = #profession#
+			</isNotNull>
+			</dynamic>
+		where userId = #userId#  
+	</update>
+	
+	<insert id="insertToken" parameterClass="map">
+		INSERT INTO token_map
+			(token, time)
+		VALUES
+			(#token#, #time#)
+	</insert>
+	
+	<delete id="deleteToken" parameterClass="string">
+		delete from token_map
+			where token = #token#
+	</delete>
+	
+	<select id="getToken" parameterClass="string" resultClass="hashmap">
+		select token,time from token_map where token = #token# limit 1
+	</select>
+	
+	<!-- mgr -->
+	
+	<select id="getLoginInfo" resultClass="mgrUser" parameterClass="string">
+		select t1.user_id as user_id,
+			   t1.loginname as loginname,
+			   t1.password as password,	 
+			   t1.authenticate as authenticate
+		from mgr_user t1
+		where t1.loginname = #username#  		
+		limit 1;
+	</select>
+	
+	<select id="getMgrUserInfo" resultClass="mgrUser" parameterClass="int">
+		select t1.*
+			   
+		from  mgr_user t1
+			 
+		where t1.user_id = #id#  			
+	</select>
+	
+	<select id="listMgrUserA" resultClass="mgrUser" parameterClass="usearchBean">
+		select t1.*		  
+		from  mgr_user t1
+		where 1=1
+			<dynamic>
+			<isNotNull property="user_id" prepend="and">
+			t1.user_id = #user_id#
+			</isNotNull>
+			<isNotNull property="loginname" prepend="and">
+			t1.loginname = #loginname#
+			</isNotNull>
+			</dynamic>
+		order by createtime desc  limit #begin#,#size#  
+	</select>
+	
+	<select id="countMgrUserA" resultClass="int" parameterClass="usearchBean">
+		select count(0)		  
+		from  mgr_user t1
+		where 1=1
+			<dynamic>
+			<isNotNull property="user_id" prepend="and">
+			t1.user_id = #user_id#
+			</isNotNull>
+			<isNotNull property="loginname" prepend="and">
+			t1.loginname = #loginname#
+			</isNotNull>
+			</dynamic>
+	</select>
+	
+	<select id="listMgrUser" resultClass="mgrUser" parameterClass="usearchBean">
+		select 
+			  t1.*		  
+		from  mgr_user t1,
+			  mgr_user_role t2,	
+			  mgr_user_community t3,
+			  mgr_user_community t4
+		where t3.user_id = #my_user_id#  	
+			  and t4.community_id = t3.community_id	
+			  and t1.user_id = t4.user_id
+			  and t2.user_id = t1.user_id
+			  and t2.role_id != 1
+			  <dynamic>
+				<isNotNull property="user_id" prepend="and">
+				t1.user_id = #user_id#
+				</isNotNull>
+				<isNotNull property="loginname" prepend="and">
+				t1.loginname = #loginname#
+				</isNotNull>
+			</dynamic>
+		order by createtime desc  limit #begin#,#size#
+	</select>
+	
+	<select id="countMgrUser" resultClass="int" parameterClass="usearchBean">
+		select 
+			  count(0)	  
+		from  mgr_user t1,
+			  mgr_user_role t2,	
+			  mgr_user_community t3,
+			  mgr_user_community t4
+		where t3.user_id = #my_user_id#  	
+			  and t4.community_id = t3.community_id	
+			  and t1.user_id = t4.user_id
+			  and t2.user_id = t1.user_id
+			  and t2.role_id != 1
+			  <dynamic>
+				<isNotNull property="user_id" prepend="and">
+				t1.user_id = #user_id#
+				</isNotNull>
+				<isNotNull property="loginname" prepend="and">
+				t1.loginname = #loginname#
+				</isNotNull>
+			</dynamic>
+		
+	</select>
+	
+	<select id="getUserRole" resultClass="role" parameterClass="int">
+		select t5.*	
+		from  mgr_user_role t2,			 
+			  mgr_role t5
+		where t2.user_id = #id#  		 
+			  and t5.role_id = t2.role_id
+	</select>
+	
+	<select id="getUserRight" resultClass="Right" parameterClass="int">
+		select distinct t3.*	
+		from  mgr_user_role t1,			 
+			  mgr_role_right t2,
+			  mgr_right t3
+		where t1.user_id = #id#  		 
+			  and t2.role_id = t1.role_id
+			  and t3.right_id = t2.right_id
+	</select>
+	
+	<select id="getUserCommunity" resultClass="community" parameterClass="int">
+		select DISTINCT
+			   t6.communityId as community_id,
+			   t6.communityName as community_name,
+			   t6.communityAddr as community_addr,
+			   t6.communityDesc as community_Dec,
+			   t6.propertyId as property_id,
+			   t6.*
+		from  mgr_user_community t3,			 
+			  community_base t6
+		where t3.user_id =  #id#			  
+			  and t6.communityId = t3.community_id
+	</select>
+	
+	<select id="getUserService" resultClass="service" parameterClass="int">
+		select t7.*
+		from  mgr_user_service t4,			  
+			  service_base t7
+		where t4.user_id = #id#  
+			  and t7.service_id = t4.service_id
+	</select>
+	
+	<select id="getRight" resultClass="Right" >
+		select
+				 *	
+		from  
+			  mgr_right 
+	</select>
+	
+	<select id="getRole" resultClass="Role" >
+		select 
+				*	
+		from  
+			  mgr_role
+	</select>
+	
+	<insert id="insertUserRole" parameterClass="relation">
+		INSERT INTO mgr_user_role
+			(user_id, role_id, createTime)
+		VALUES
+			(#user_id#, #role_id#,now())
+	</insert>
+	
+	<insert id="insertUserService" parameterClass="relation">
+		INSERT INTO mgr_user_service
+			(user_id, service_id, createTime)
+		VALUES
+			(#user_id#, #service_id#,now())
+	</insert>
+	
+	<insert id="insertUserCommunity" parameterClass="relation">
+		INSERT INTO mgr_user_community
+			(user_id, community_id, createTime)
+		VALUES
+			(#user_id#, #community_id#,now())
+	</insert>
+	
+	<insert id="insertRoleRight" parameterClass="relation">
+		INSERT INTO mgr_role_right
+			(role_id, right_id, createTime)
+		VALUES
+			(#role_id#, #right_id#,now())
+	</insert>
+	
+	<delete id="deleteUserRole" parameterClass="int">
+		delete from mgr_user_role
+			where user_id = #user_id#
+	</delete>
+	
+	<delete id="deleteUserCommunity" parameterClass="int">
+		delete from mgr_user_community
+			where user_id = #user_id#
+	</delete>
+	
+	<delete id="deleteUserService" parameterClass="int">
+		delete from mgr_user_service
+			where user_id = #user_id#
+	</delete>
+	
+	<delete id="deleteRoleRight" parameterClass="int">
+		delete from mgr_role_right
+			where role_id = #role_id#
+	</delete>
+	
+	
+	<insert id="insertMgrUser" parameterClass="mgrUser">
+		INSERT INTO mgr_user
+			(loginname, password, personName, phone, email,createTime)
+		VALUES
+			(#loginname#, #password#,#personName#, #phone#, #email#, now())
+		<selectKey resultClass="int" keyProperty="user_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<update id="updateMgrUser" parameterClass="mgrUser">
+		update mgr_user
+			
+		set
+			user_id = #user_id#
+			<dynamic>
+				<isNotNull property="loginname" prepend=",">
+				loginname = #loginname#
+				</isNotNull>
+				<isNotNull property="password" prepend=",">
+				password = #password#
+				</isNotNull>
+				<isNotNull property="personName" prepend=",">
+					personName = #personName#
+				</isNotNull>
+				<isNotNull property="phone" prepend=",">
+				phone = #phone#
+				</isNotNull>
+				<isNotNull property="email" prepend=",">
+				email = #email#
+				</isNotNull>
+			</dynamic>
+		where user_id = #user_id#
+	</update> 
+	
+	<select id="countUserName" resultClass="int" parameterClass="string">
+		select count(0)
+		from  mgr_user   
+		where loginname = #loginname#
+	</select>
+	
+		<select id="listQxUser" resultClass="mgrUser" parameterClass="usearchBean">
+		select 
+                t1.userId as user_id,
+				t1.loginName as loginname,
+				t1.password as password,
+				t1.phone as phone,
+				CONCAT(t2.floor,'栋',t2.room,'室') as addr,
+				t3.communityName as cname,
+				t3.communityId as cid,
+				t1.createTime as createTime
+		from  user_login t1,
+			  user_baseinfo t2,	
+			  community_base t3
+		where t1.userid = t2.userid
+			  and t2.communityId = t3.communityId	
+			  <dynamic>
+				<isNotNull property="cid" prepend="and">
+				t2.communityId = #cid#
+				</isNotNull>
+				<isNotNull property="loginname" prepend="and">
+				t1.loginname like '%$loginname$%'
+				</isNotNull>
+				<isNotNull property="phone" prepend="and">
+				t1.phone like '%$phone$%'
+				</isNotNull>
+				  <isNotNull property="authenticate" prepend="and">
+					  t1.authenticate = #authenticate#
+				  </isNotNull>
+			</dynamic>
+		order by createtime desc  limit #begin#,#size#
+	</select>
+	
+	<select id="countQxUser" resultClass="int" parameterClass="usearchBean">
+		select 
+			  count(0)	  
+		from  user_login t1,
+			  user_baseinfo t2,	
+			  community_base t3
+		where t1.userid = t2.userid
+			  and t2.communityId = t3.communityId	
+			  <dynamic>
+				<isNotNull property="cid" prepend="and">
+				t2.communityId = #cid#
+				</isNotNull>
+				<isNotNull property="loginname" prepend="and">
+				t1.loginname like '%$loginname$%'
+				</isNotNull>
+				<isNotNull property="phone" prepend="and">
+				t1.phone like '%$phone$%'
+				</isNotNull>
+				<isNotNull property="authenticate" prepend="and">
+					t1.authenticate = #authenticate#
+				</isNotNull>
+			</dynamic>
+		
+	</select>
+	<!-- 账户冻结 -->
+	<update id="accountDisable" parameterClass="int">
+		update mgr_user set activation=0 where user_id = #value#
+ 	</update>
+ 	
+	<!-- 账户解冻 -->
+	<update id="accountEnable" parameterClass="int">
+		update mgr_user set activation=1 where user_id = #value#
+ 	</update>
+
+	<sql id="listQxUser_sql">
+		from  user_login t1
+        INNER JOIN user_baseinfo t2 ON t1.userid = t2.userid
+        INNER JOIN community_base t3 ON t2.communityId = t3.communityId
+        LEFT JOIN community_base t4 ON t2.sub_cid = t4.communityid
+		where 1=1
+        <isNotEmpty property="community_list" prepend="and">
+            t2.communityId IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="loginname" prepend="and">
+            t1.loginname like '%$loginname$%'
+        </isNotEmpty>
+        <isNotEmpty property="phone" prepend="and">
+            t1.phone like '%$phone$%'
+        </isNotEmpty>
+        <isNotEmpty property="authenticate" prepend="and">
+            t1.authenticate = #authenticate#
+        </isNotEmpty>
+        <isNotEmpty property="nick" prepend="and">
+            t1.nick LIKE CONCAT('%', #nick#, '%')
+        </isNotEmpty>
+	</sql>
+
+	<select id="listQxUserV4" resultClass="hashmap" parameterClass="hashmap">
+		select
+		t1.userId as user_id,
+		t1.loginName as loginname,
+		t1.phone as phone,
+		CONCAT(t2.floor,'栋',t2.room,'室') as addr,
+        t2.communityId as cid,
+        t3.communityName as cname,
+        t2.sub_cid as sub_cid,
+        t4.communityName as sub_cname,
+		t1.createTime as createTime
+		<include refid="listQxUser_sql"/>
+		order by createtime desc
+        limit #begin#,#size#
+	</select>
+
+	<select id="countQxUserV4" resultClass="int" parameterClass="hashmap">
+		select
+		count(0)
+		<include refid="listQxUser_sql"/>
+
+	</select>
+
+	<sql id="listMgrUserA_sql">
+		from  mgr_user t1
+		where 1=1
+		<dynamic>
+			<isNotEmpty property="user_id" prepend="and">
+				t1.user_id = #user_id#
+			</isNotEmpty>
+			<isNotEmpty property="loginname" prepend="and">
+				t1.loginname = #loginname#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+
+	<sql id="listMgrUser_sql">
+		from  mgr_user t1,
+		mgr_user_role t2,
+		mgr_user_community t3,
+		mgr_user_community t4
+		where t3.user_id = #my_user_id#
+		and t4.community_id = t3.community_id
+		and t1.user_id = t4.user_id
+		and t2.user_id = t1.user_id
+		and t2.role_id != 1
+		and t1.user_id != 1
+		<dynamic>
+			<isNotEmpty property="user_id" prepend="and">
+				t1.user_id = #user_id#
+			</isNotEmpty>
+			<isNotEmpty property="loginname" prepend="and">
+				t1.loginname = #loginname#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+
+
+	<select id="listMgrUserAV4" resultClass="mgrUser" parameterClass="hashmap">
+		select distinct t1.*
+		<include refid="listMgrUserA_sql"/>
+		order by t1.createtime desc
+		limit #begin#,#size#
+	</select>
+
+	<select id="countMgrUserAV4" resultClass="int" parameterClass="hashmap">
+		select count(0)
+		<include refid="listMgrUserA_sql"/>
+	</select>
+
+	<select id="listMgrUserV4" resultClass="mgrUser" parameterClass="hashmap">
+		select distinct t1.*
+		<include refid="listMgrUser_sql"/>
+		order by t1.createtime desc
+		limit #begin#,#size#
+	</select>
+
+	<select id="countMgrUserV4" resultClass="int" parameterClass="hashmap">
+		select count(distinct t1.user_id)
+		<include refid="listMgrUser_sql"/>
+	</select>
+
+    <select id="findMgrUserRoleByUid" resultClass="hashmap" parameterClass="int">
+        SELECT * FROM mgr_user_role WHERE user_id = #user_id#
+    </select>
+
+    <select id="findMgrUserCommunityByUid" resultClass="hashmap" parameterClass="int">
+        SELECT * FROM mgr_user_community WHERE user_id = #user_id#
+    </select>
+
+    <insert id="insertMgrUserInfo" parameterClass="mgrUser">
+        INSERT INTO mgr_user
+        (loginname, password, personName, type, phone, email, authenticate, activation, updateTime, createTime, distri_worker_name, distri_worker_phone)
+        VALUES
+        (#loginname#, #password#, #personName#, #type#, #phone#, #email#, #authenticate#, #activation#, #updateTime#, #createTime#, #distri_worker_name#, #distri_worker_phone#);
+        <selectKey resultClass="int" keyProperty="user_id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateMgrUserInfo" parameterClass="mgrUser">
+        UPDATE mgr_user SET
+        loginname = #loginname#,
+        password = #password#,
+        personName = #personName#,
+        type = #type#,
+        phone = #phone#,
+        email = #email#,
+        authenticate = #authenticate#,
+        activation = #activation#,
+        updateTime = #updateTime#,
+        createTime = #createTime#,
+        distri_worker_name = #distri_worker_name#,
+        distri_worker_phone = #distri_worker_phone#
+        WHERE
+        user_id = #user_id#;
+    </update>
+
+    <update id="changeCommunity" parameterClass="hashmap">
+        UPDATE user_baseinfo SET communityId = #cid#, sub_cid = #sub_cid# WHERE userid = #user_id#
+    </update>
+
+	<sql id="searchDeliveryer_sql">
+		FROM mgr_user t1, mgr_user_role t2, mgr_user_community t3
+		WHERE t1.user_id = t2.user_id AND t1.user_id = t3.user_id
+		AND t2.role_id = #role_id#
+		<isNotEmpty property="community_list" prepend="and">
+			t3.community_id IN
+			<iterate property="community_list" open="(" close=")" conjunction=",">
+				#community_list[]#
+			</iterate>
+		</isNotEmpty>
+		<isNotEmpty property="user_id" prepend="and">
+			t1.user_id = #user_id#
+		</isNotEmpty>
+		<isNotEmpty property="loginname" prepend="and">
+			t1.loginname = #loginname#
+		</isNotEmpty>
+	</sql>
+
+	<select id="searchDeliveryer" parameterClass="hashmap" resultClass="hashmap">
+		SELECT DISTINCT t1.*
+		<include refid="searchDeliveryer_sql"/>
+		ORDER BY t3.community_id, t1.createtime desc
+		limit #begin#, #size#
+	</select>
+
+	<select id="searchDeliveryerCount" resultClass="int" parameterClass="hashmap">
+		SELECT count(DISTINCT t1.user_id)
+		<include refid="searchDeliveryer_sql"/>
+	</select>
+
+</sqlMap>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE taglib PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN"
+        "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd">
+<taglib>
+    <tlib-version>0.0.1</tlib-version>
+    <jsp-version>1.2</jsp-version>
+    <short-name>qxit-tool</short-name>
+    <uri>/WEB-INF/tag/qxit-tool.tld</uri>
+    <display-name>QXIT Tools Tags</display-name>
+    <description>区享自定义工具标签库</description>
+
+    <tag>
+        <name>getEnumName</name>
+        <tag-class>com.brilliantreform.sc.tag.EnumTag</tag-class>
+        <body-content>JSP</body-content>
+        <description>枚举名称获取标签</description>
+
+        <attribute>
+            <name>clazz</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>枚举类</description>
+        </attribute>
+        <attribute>
+            <name>value</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>枚举值</description>
+        </attribute>
+        <attribute>
+            <name>name</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>名称</description>
+        </attribute>
+    </tag>
+
+    <tag>
+        <name>getEnumList</name>
+        <tag-class>com.brilliantreform.sc.tag.EnumListTag</tag-class>
+        <body-content>JSP</body-content>
+        <description>枚举获取标签</description>
+
+        <attribute>
+            <name>clazz</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>枚举类</description>
+        </attribute>
+        <attribute>
+            <name>enumList</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>返回的枚举list</description>
+        </attribute>
+    </tag>
+
+    <tag>
+        <name>getDictList</name>
+        <tag-class>com.brilliantreform.sc.tag.DictTag</tag-class>
+        <body-content>JSP</body-content>
+        <description>数据字典获取标签</description>
+
+        <attribute>
+            <name>module</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>模块</description>
+        </attribute>
+        <attribute>
+            <name>type</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>类型</description>
+        </attribute>
+        <attribute>
+            <name>var</name>
+            <required>true</required>
+            <rtexprvalue>false</rtexprvalue>
+            <description>返回的数据字典map</description>
+        </attribute>
+    </tag>
+
+    <tag>
+        <name>getDictName</name>
+        <tag-class>com.brilliantreform.sc.tag.DictTag</tag-class>
+        <body-content>JSP</body-content>
+        <description>获取数据字典名称</description>
+
+        <attribute>
+            <name>module</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>模块</description>
+        </attribute>
+        <attribute>
+            <name>type</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>类型</description>
+        </attribute>
+        <attribute>
+            <name>value</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>值</description>
+        </attribute>
+        <attribute>
+            <name>var</name>
+            <required>true</required>
+            <rtexprvalue>false</rtexprvalue>
+            <description>返回的数据字典名称</description>
+        </attribute>
+    </tag>
+
+</taglib>

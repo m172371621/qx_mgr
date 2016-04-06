@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="sysjob">
+
+    <typeAlias alias="sysJob" type="com.brilliantreform.sc.sys.po.SysJob"/>
+
+    <sql id="searchSysJob_sql">
+        FROM sys_job
+        <dynamic prepend="where">
+            <isNotEmpty prepend="and" property="name">
+                name like '%name%'
+            </isNotEmpty>
+            <isNotEmpty prepend="and" property="status">
+                status = #status#
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+    
+    <select id="searchSysJob" parameterClass="hashmap" resultClass="hashmap">
+        SELECT *
+        <include refid="searchSysJob_sql"/>
+        limit $begin$,$size$;
+    </select>
+
+    <select id="searchSysJobCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchSysJob_sql"/>
+    </select>
+    
+    <select id="findAllJob" resultClass="sysJob">
+        SELECT * FROM sys_job
+    </select>
+</sqlMap>

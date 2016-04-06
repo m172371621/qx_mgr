@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="purchase">
+    <typeAlias alias="purchaseCar" type="com.brilliantreform.sc.purchase.po.PurchaseCar"/>
+    <typeAlias alias="purchaseHeader" type="com.brilliantreform.sc.purchase.po.PurchaseHeader"/>
+    <typeAlias alias="purchaseDetail" type="com.brilliantreform.sc.purchase.po.PurchaseDetail"/>
+    <typeAlias alias="supplierInfo" type="com.brilliantreform.sc.purchase.po.SupplierInfo"/>
+    <typeAlias alias="totalProduct" type="com.brilliantreform.sc.stock.po.TotalProduct"/>
+    <typeAlias alias="totalService" type="com.brilliantreform.sc.stock.po.TotalService"/>
+    <typeAlias alias="product" type="com.brilliantreform.sc.product.po.Product"/>
+    <typeAlias alias="service" type="com.brilliantreform.sc.service.po.ServiceVo"/>
+    
+    <select id="findCartInfo" parameterClass="int" resultClass="hashmap">
+        SELECT t1.*, t2.* FROM purchase_cart t1, service_product_sum t2 WHERE t1.product_id = t2.product_id AND t1.createby = #user_id#
+    </select>
+
+    <select id="getCartCount" parameterClass="int" resultClass="int">
+        SELECT sum(product_amount) FROM purchase_cart WHERE createby = #user_id#
+    </select>
+
+    <delete id="delCartInfo" parameterClass="int">
+        DELETE FROM purchase_cart WHERE purchase_cart_id = #purchase_cart_id#
+    </delete>
+
+    <sql id="getPurchaseHeader_sql">
+        FROM purchase_header t1, community_base t2
+        WHERE t1.createbycid = t2.communityId
+        AND t1.createbycid IN
+        <iterate property="community_list" open="(" close=")" conjunction=",">
+            #community_list[]#
+        </iterate>
+        <isNotEmpty property="begintime" prepend="and">
+            t1.createTime &gt;= #begintime#
+        </isNotEmpty>
+        <isNotEmpty property="endtime" prepend="and">
+            t1.createTime &lt; #endtime#
+        </isNotEmpty>
+    </sql>
+
+    <select id="getPurchaseHeader" parameterClass="java.util.Map" resultClass="hashmap">
+        SELECT t1.*, t2.communityname as community_name,
+        (SELECT IFNULL(sum(product_real_amount), 0) FROM purchase_detail WHERE purchase_header_id = t1.purchase_header_id) as total_amount,
+        (SELECT IFNULL(sum(product_real_amount), 0) FROM purchase_detail WHERE purchase_header_id = t1.purchase_header_id AND status = 1) as total_notsend_amount,
+        (SELECT IFNULL(sum(product_real_amount), 0) FROM purchase_detail WHERE purchase_header_id = t1.purchase_header_id AND status != 3) as total_notarrive_amount
+        <include refid="getPurchaseHeader_sql"/>
+        ORDER BY t1.status ASC, t1.createTime DESC
+        LIMIT #begin#,#size#
+    </select>
+
+    <select id="getPurchaseHeaderCount" parameterClass="java.util.Map" resultClass="java.lang.Integer">
+        SELECT COUNT(0)
+        <include refid="getPurchaseHeader_sql"/>
+    </select>
+
+    <select id="findPurchaseDetailByHeaderId" parameterClass="int" resultClass="hashmap">
+        SELECT t1.*, t2.*, t3.* FROM purchase_detail t1
+        INNER JOIN service_product_sum t2 ON t1.product_id = t2.product_id
+        LEFT JOIN supplier_info t3 ON t1.supplier_id = t3.supplier_info_id
+        WHERE t1.purchase_header_id = #header_id#
+    </select>
+    
+    <select id="getSumProperties" parameterClass="int" resultClass="hashmap">
+        SELECT sum(product_amount * product_price) as product_price_sum,
+        sum(product_real_amount * product_real_price) as product_real_price_sum
+        FROM purchase_detail WHERE purchase_header_id = #header_id#
+    </select>
+
+    <select id="getPurchaseDetailById" parameterClass="int" resultClass="hashmap">
+        SELECT t1.*, t2.* FROM purchase_detail t1, purchase_header t2
+        WHERE t1.purchase_header_id = t2.purchase_header_id
+        AND t1.purchase_detail_id = #purchase_detail_id#
+    </select>
+
+    <select id="getPurchaseDetail" parameterClass="int" resultClass="purchaseDetail">
+        SELECT t1.* FROM purchase_detail t1
+        WHERE t1.purchase_detail_id = #purchase_detail_id#
+    </select>
+
+    <update id="updatePurchaseDetailStatus" parameterClass="hashmap">
+        UPDATE purchase_detail SET status = #status# WHERE purchase_detail_id = #purchase_detail_id#
+    </update>
+
+    <select id="getPurchaseHeaderById" parameterClass="int" resultClass="hashmap">
+        SELECT t1.*, t2.communityname as community_name FROM purchase_header t1, community_base t2
+        WHERE t1.createbycid = t2.communityid AND t1.purchase_header_id = #purchase_header_id#
+    </select>
+
+    <select id="getHeaderById" parameterClass="int" resultClass="purchaseHeader">
+        SELECT t1.* FROM purchase_header t1
+        WHERE t1.purchase_header_id = #purchase_header_id#
+    </select>
+
+    <update id="auditPurchase" parameterClass="java.util.Map">
+        UPDATE purchase_header
+        SET status=#status#
+        WHERE purchase_header_id=#purchase_header_id#
+    </update>
+
+    <select id="findService" parameterClass="int" resultClass="totalService">
+        SELECT * FROM inventory_classification WHERE parent_id = #parent_id# AND service_type = 1
+    </select>
+
+    <sql id="searchProduct_sql">
+        FROM service_product_sum t1, inventory_classification t2
+        WHERE t1.service_id = t2.service_id AND t2.service_type = 1
+        <isNotEmpty prepend="and" property="service_id">
+            t1.service_id = #service_id#
+        </isNotEmpty>
+        <isNotEmpty prepend="and" property="keyword">
+            t1.name like '%$keyword$%'
+        </isNotEmpty>
+    </sql>
+    <select id="searchProduct" parameterClass="java.util.Map" resultClass="totalProduct">
+        SELECT t1.*
+        <include refid="searchProduct_sql"/>
+        <isEmpty property="orderby">
+            ORDER BY convert(t1.name using gbk) ASC
+        </isEmpty>
+        <isNotEmpty property="orderby">
+            ORDER BY $orderby$
+        </isNotEmpty>
+        LIMIT #begin#,#size#
+    </select>
+    <select id="searchProductCount" parameterClass="java.util.Map" resultClass="int">
+        SELECT count(0)
+        <include refid="searchProduct_sql"/>
+    </select>
+
+    <select id="findProductByKeyword" parameterClass="hashmap" resultClass="totalProduct">
+        SELECT t1.* FROM service_product_sum t1 WHERE t1.name LIKE '%$keyword$%'
+        <isNotEmpty prepend="and" property="header_id">
+          NOT EXISTS (SELECT 1 FROM purchase_detail t2 WHERE t2.purchase_header_id = #header_id# AND t1.product_id = t2.product_id)
+        </isNotEmpty>
+    </select>
+
+    <select id="getServiceById" parameterClass="int" resultClass="totalService">
+        SELECT * FROM inventory_classification WHERE service_id = #service_id#
+    </select>
+
+    <select id="getProductById" parameterClass="int" resultClass="totalProduct">
+        SELECT * FROM service_product_sum WHERE product_id = #product_id#
+    </select>
+
+    <select id="getPurchaseCartByProduct" parameterClass="hashmap" resultClass="purchaseCar">
+        SELECT * FROM purchase_cart WHERE createby = #user_id# AND product_id = #product_id#
+    </select>
+
+    <insert id="insertPurchaseCar" parameterClass="purchaseCar">
+        INSERT INTO purchase_cart
+        (createby, product_id, product_name, product_amount, product_price, remark, createTime)
+        VALUES
+        (#createby#, #product_id#, #product_name#, #product_amount#, #product_price#, #remark#, #createTime#);
+        <selectKey resultClass="int" keyProperty="purchase_cart_id">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updatePurchaseCar" parameterClass="purchaseCar">
+        UPDATE purchase_cart SET
+        createby = #createby#,
+        product_id = #product_id#,
+        product_name = #product_name#,
+        product_amount = #product_amount#,
+        product_price = #product_price#,
+        remark = #remark#,
+        createTime = #createTime#
+        WHERE purchase_cart_id = #purchase_cart_id#
+    </update>
+
+    <insert id="insertPurchaseDetail" parameterClass="purchaseDetail">
+        INSERT INTO purchase_detail
+        (purchase_header_id, product_id, product_name, product_amount, product_real_amount, product_price, product_real_price, remark, status, supplier_id)
+        VALUES
+        (#purchase_header_id#, #product_id#, #product_name#, #product_amount#, #product_real_amount#, #product_price#, #product_real_price#, #remark#, #status#, #supplier_id#);
+        <selectKey resultClass="int" keyProperty="purchase_detail_id">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updatePurchaseDetail" parameterClass="purchaseDetail">
+        UPDATE purchase_detail SET
+        purchase_header_id = #purchase_header_id#,
+        product_id = #product_id#,
+        product_name = #product_name#,
+        product_amount = #product_amount#,
+        product_real_amount = #product_real_amount#,
+        product_price = #product_price#,
+        product_real_price = #product_real_price#,
+        remark = #remark#,
+        status = #status#,
+        supplier_id = #supplier_id#
+        WHERE purchase_detail_id = #purchase_detail_id#
+    </update>
+    
+    <insert id="insertPurchaseHeader" parameterClass="purchaseHeader">
+        INSERT INTO purchase_header
+        (purchase_header_no, purchase_price, purchase_real_price, createby, createbycid, remark, status, createTime)
+        VALUES
+        (#purchase_header_no#, #purchase_price#, #purchase_real_price#, #createby#, #createbycid#, #remark#, #status#, #createTime#);
+        <selectKey resultClass="int" keyProperty="purchase_header_id">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updatePurchaseHeader" parameterClass="purchaseHeader">
+        UPDATE purchase_header SET
+        purchase_header_no = #purchase_header_no#,
+        purchase_price = #purchase_price#,
+        purchase_real_price = #purchase_real_price#,
+        createby = #createby#,
+        createbycid = #createbycid#,
+        remark = #remark#,
+        status = #status#,
+        createTime = #createTime#
+        WHERE purchase_header_id = #purchase_header_id#
+    </update>
+
+    <delete id="removePurchaseCart" parameterClass="int">
+        DELETE FROM purchase_cart WHERE createby = #user_id#
+    </delete>
+
+    <select id="findSupplierByProductId" parameterClass="int" resultClass="supplierInfo">
+        SELECT t1.* FROM supplier_info t1, supplier_realation_product t2 WHERE t1.supplier_info_id = t2.supplier_info_id AND t2.product_id = #product_id# AND t1.removetag = 0
+    </select>
+
+    <select id="getChildProByTotalProId" parameterClass="hashmap" resultClass="product">
+        SELECT * FROM service_product WHERE i_product_id = #total_product_id# AND community_id = #community_id#
+    </select>
+
+    <select id="getChildServiceByTotalServiceId" parameterClass="hashmap" resultClass="service">
+        SELECT * FROM service_base WHERE i_service_id = #total_service_id# AND community_id = #community_id#
+    </select>
+
+    <delete id="removePurchaseDetail" parameterClass="int">
+        DELETE FROM purchase_detail WHERE purchase_detail_id = #purchase_detail_id#
+    </delete>
+
+</sqlMap>

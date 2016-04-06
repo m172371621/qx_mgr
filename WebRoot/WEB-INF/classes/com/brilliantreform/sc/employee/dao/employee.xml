@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="employee">
+    <typeAlias alias="employee" type="com.brilliantreform.sc.employee.po.Employee"/>
+
+    <select id="selEmployeeList" parameterClass="hashmap" resultClass="hashmap">
+        <![CDATA[
+        SELECT cb.communityName,mu.personName,mu.loginname,mu.password,mu.phone,mr.role_name,mu.authenticate,mu.user_id,muc.community_id,mu.age,mu.sex,mu.touxiang
+        FROM mgr_user mu
+          INNER JOIN mgr_user_community muc
+            ON mu.user_id = muc.user_id
+          INNER JOIN community_base cb
+            ON cb.communityId = muc.community_id
+          INNER JOIN mgr_role_right mrr
+            ON mrr.relation_id = muc.relation_id
+          INNER JOIN mgr_role mr
+            ON mr.role_id = mrr.role_id
+        WHERE FIND_IN_SET(
+            CAST(communityId AS CHAR),
+            queryChildren (#cid#)
+          ) > 0
+        ]]>
+        <dynamic>
+            <isNotEmpty property="communiyt_id" prepend="and">
+                cb.communityId = #communiyt_id#
+            </isNotEmpty>
+            <isNotEmpty property="authenticate" prepend="and">
+                mu.authenticate = #authenticate#
+            </isNotEmpty>
+        </dynamic>
+        LIMIT #start#,#size#
+    </select>
+
+    <select id="selEmployee" parameterClass="int" resultClass="hashmap">
+       <![CDATA[
+
+         SELECT
+          *
+        FROM
+          mgr_user mu
+          INNER JOIN mgr_user_community muc
+            ON mu.user_id = muc.user_id
+          INNER JOIN community_base cb
+            ON cb.communityId = muc.community_id
+          INNER JOIN mgr_role_right mrr
+            ON mrr.relation_id = muc.relation_id
+          INNER JOIN mgr_role mr
+            ON mr.role_id = mrr.role_id
+        WHERE mu.user_id = #user_id#
+
+        ]]>
+    </select>
+
+    <select id="selEmployeeCount" parameterClass="hashmap" resultClass="int">
+        <![CDATA[
+            SELECT
+             COUNT(*)
+            FROM
+              mgr_user mu
+              INNER JOIN mgr_user_community muc
+                ON mu.user_id = muc.user_id
+              INNER JOIN community_base cb
+                ON cb.communityId = muc.community_id
+              INNER JOIN mgr_role_right mrr
+                ON mrr.relation_id = muc.relation_id
+              INNER JOIN mgr_role mr
+                ON mr.role_id = mrr.role_id
+            WHERE FIND_IN_SET(
+                CAST(communityId AS CHAR),
+                queryChildren (#cid#)
+              ) > 0
+        ]]>
+        <dynamic>
+            <isNotEmpty property="communiyt_id" prepend="and">
+                cb.communityId = #communiyt_id#
+            </isNotEmpty>
+            <isNotEmpty property="authenticate" prepend="and">
+                mu.authenticate = #authenticate#
+            </isNotEmpty>
+        </dynamic>
+    </select>
+    <select id="queryChildrenList" parameterClass="int" resultClass="hashmap">
+          SELECT * FROM community_base WHERE FIND_IN_SET(CAST( communityId AS CHAR), queryChildren(#cid#))
+    </select>
+
+    <select id="selMgrUserRole" parameterClass="int" resultClass="int">
+        SELECT mr.role_id FROM mgr_user mu
+          INNER JOIN mgr_user_role mur ON mu.user_id = mur.user_id
+          INNER JOIN mgr_role mr ON mur.role_id=mr.role_id
+          WHERE mu.user_id = #user_id#
+    </select>
+    <select id="selMgrRole" resultClass="hashmap">
+     SELECT * FROM mgr_role
+    </select>
+    <insert id="insertEmployee" parameterClass="map">
+        INSERT INTO mgr_user
+        (loginname,password,personName,age,touxiang,sex,type,phone,authenticate,activation,createTime)
+        VALUES
+        (#loginname#,#password#,#personName#,#age#,#picture#,#sex#,#type#,#phone#,#authenticate#,#activation#,NOW())
+        <selectKey resultClass="int" keyProperty="user_id">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <insert id="insertMgrUserRole" parameterClass="map">
+        INSERT INTO mgr_user_role(user_id , role_id,createTime) VALUES (#user_id#,#role_id#,now())
+        <selectKey resultClass="int" keyProperty="relation_id">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+    <insert id="insertMgrUserCommunity" parameterClass="map">
+        insert into mgr_user_community(user_id,community_id,createTime) VALUES (#user_id#,#community_id#,now())
+    </insert>
+
+    <update id="updateEmployee" parameterClass="map">
+      UPDATE mgr_user
+        SET PASSWORD = #password#,
+            age = #age#,
+            sex = #sex#,
+            phone = #phone#,
+            updateTime = now()
+        WHERE user_id = #user_id#
+    </update>
+    <delete id="delMgrUserRole" parameterClass="int">
+        DELETE FROM mgr_user_role WHERE user_id = #user_id#
+    </delete>
+    <update id="updateMgrUserCommunity" parameterClass="map">
+        update
+         mgr_user_community set community_id = #community_id# where user_id = #user_id#
+    </update>
+
+    <update id="liZhiEmployee" parameterClass="int">
+        update mgr_user set authenticate = 0,activation = 0 where user_id = #user_id#
+    </update>
+</sqlMap>

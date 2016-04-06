@@ -1,0 +1,165 @@
+@charset "UTF-8";
+/* CSS Document */
+* {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	box-sizing: border-box;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+	font-family: "Microsoft YaHei";
+}
+code, kbd, pre, samp {
+	font-family: courier new, courier, monospace;
+} /* 统一等宽字体 */
+html {
+	font-size: 1em;
+	height: 100%;
+}
+input,textarea{resize:none;-webkit-appearance:none;outline:0}  /* 让表单元素在ios设备上显示正常*/
+small {
+	font-size: 12px;
+} /* 小于 12px 的中文很难阅读，让 small 正常化 */
+img {
+	max-width: 100%;
+	height: auto;
+	outline: none;
+	border: none;
+}
+a {
+	text-decoration: none;
+	outline: none;
+}
+a:hover {
+	text-decoration: none;
+}
+body {
+	max-width: 640px;
+	margin: 0 auto;
+	width: 100%;
+	overflow-x: hidden;
+	overflow-y: visible; /*background-color:#f1f2f4;*/
+}
+/*给最大的容器DIV常用的这个属性*/
+.msg {
+	width: 100%;
+	height: 100%;
+	background-color: #f1f2f4;
+	overflow: hidden;
+}
+.detail { /*margin-left:3%*/;
+	margin-top: 3%;
+	width: 92%;
+	margin-left: auto;
+	margin-right: auto;
+	overflow: hidden;
+}
+.gray_font {
+	font-family: "Microsoft YaHei";
+	font-size: 0.8em;
+	line-height: 1.5;
+	color: rgb(121, 121, 121); padding-top:2%;
+}
+.red_font {
+	font-family: "Microsoft YaHei";
+	font-size: 0.8em;
+	padding-top: 0.5%;
+	color: rgb(255, 86, 72);
+}
+.mobile {
+	width: 85%;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top:5%;
+	height: 50px;
+}
+.line {
+	width: 100%;
+	height: 1px;
+	background-color: #e8e8e8;
+	margin-top: 2%;
+}
+.phone {
+	font-family: "JZongDengXian";
+	font-size: 1em;
+	color: rgb(60, 60, 60);
+}
+.name {
+	width: 85%;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 5%;
+	height: 50px;
+}
+.address {
+	width: 85%;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 5%;
+	height: 50px;
+}
+.qx_xia {
+	width: 100%;
+	background-color: #f1f2f4;
+	height: 20px;
+	/*margin-top: 5%;*/
+	line-height: 20px;
+	text-align: center;
+}
+.qx_xia a {
+	font-family: "Microsoft YaHei";
+	font-size: 0.76em;
+	color: rgb(121, 121, 121);
+}
+.arrow img {
+	width: 3%;
+}
+.bottom {
+	width: 100%;
+	height: 50px;
+	background-color: #ff5648;
+	line-height: 50px;
+	text-align: center;
+	overflow: hidden;
+	position: fixed;
+	left: 0;
+	bottom: 0;
+}
+.bottom a {
+	font-family: "Microsoft YaHei";
+	font-size: 1em;
+	color: rgb(255, 255, 255);
+}
+.qx_phone {
+	width: 100%;
+	border-radius: 8px;
+	font-size:1em;
+	height: 50px;
+	background-color: #ffffff;
+	line-height: 50px;
+	border: 1px solid #e1e1e1;
+	margin-left: auto;
+	margin-right: auto; outline:none; border:none; padding-left:20px;
+}
+.qx_input {/* padding-left:10%;*/
+}
+.qg_gl a {
+	font-family: "Microsoft YaHei";
+	font-size: 0.8em;
+	color: rgb(255, 86, 72);
+}
+.qg_gl {
+	margin-left: 15%;
+}
+.btn {
+	width: 80%;
+	height: 40px;
+	color:white;
+	font-weight: bold;
+	border-radius:4px;
+	background-color:red;
+	text-align: center;
+	font-size:1.2em; border:none; outline:none;
+}
+#qx_step{ position:relative; width:100%; overflow:hidden;}
+#rockets{ position:absolute; left:2%; bottom:6.8%;}
+#rockets img{ width:50%;}

@@ -1,0 +1,105 @@
+@charset "UTF-8";
+/* CSS Document */
+* {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	box-sizing: border-box;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+	font-family: "Microsoft YaHei";
+}
+code, kbd, pre, samp {
+	font-family: courier new, courier, monospace;
+} /* 统一等宽字体 */
+html {
+	font-size: 1em;
+	height: 100%;
+}
+input,textarea{resize:none;-webkit-appearance:none;outline:0}  /* 让表单元素在ios设备上显示正常*/
+small {
+	font-size: 12px;
+} /* 小于 12px 的中文很难阅读，让 small 正常化 */
+img {
+	max-width: 100%;
+	height: auto;
+	outline: none;
+	border: none;
+}
+a {
+	text-decoration: none;
+	outline: none;
+}
+a:hover {
+	text-decoration: none;
+}
+body {
+	max-width: 640px;
+	margin: 0 auto;
+	width: 100%;
+	overflow-x: hidden;
+	overflow-y: visible; /*background-color:#f1f2f4;*/
+}
+/*给最大的容器DIV常用的这个属性*/
+.content{ width:100%; overflow:hidden;/* position:relative;*/ /*height:200px; */background-color:#ffffff;}
+.first_part{ width:100%; border-bottom:1px solid #DDD;padding-top: 10px;padding-bottom: 10px; overflow:hidden; position:relative; /*line-height:65px;*/}
+.img_one img{ width:40%;}
+.img_one{ position:absolute; left:3%; top:10%;height:30px;line-height: 30px;}
+.border_one{ width:28%; height:35px; border-radius:6px; border:1px solid #f1f2f4; position:absolute; right:2%; top:18%; text-align:center;
+line-height:30px;}
+.border_one a{ font-family: "Microsoft YaHei"; font-size:0.8em;
+  color: rgb(123, 123, 123);
+}
+.north_font{ padding-left:10px; padding-top:2%;  font-family: "Microsoft YaHei"; font-size:0.85em; font-weight:bold;
+  color: rgb(0, 0, 0);
+}
+.qx_clock{ font-family: "Microsoft YaHei"; font-size:0.75em; padding-left:10px; padding-top:2%;
+  color: rgb(177, 177, 177);
+}
+.second_part{ width:100%; height:50px; /*border-top:1px solid #DDD;*/ border-bottom:1px solid #DDD; overflow:hidden; position:relative;}
+.img_two img{ width:40%;}
+.img_two{ position:absolute; left:2%; top:10%;}
+.border_two{ width:28%; height:35px; border-radius:6px; border:1px solid #f58649; position:absolute; right:2%; top:24%; text-align:center;
+line-height:30px;}
+.border_two_first{ width:28%; height:35px; border-radius:6px; border:1px solid #d7d7d7; position:absolute; right:2%; top:24%; text-align:center;
+line-height:30px;}
+.border_two_first a{ font-family: "Microsoft YaHei"; font-size:0.8em;
+  color:#a2a2a2;}
+.border_two a{ font-family: "Microsoft YaHei"; font-size:0.8em;
+  color:#f58649;}
+.third_part{ width:100%; height:50px; /*border-top:1px solid #DDD;*/ border-bottom:1px solid #DDD; overflow:hidden; position:relative;}
+.img_third img{ width:40%;}
+.img_third{ position:absolute; left:2%; top:10%;}
+.border_third{ width:28%; height:35px; border-radius:6px; border:1px solid #a8d06d; position:absolute; right:2%; top:20%; text-align:center;
+line-height:30px;}
+.border_third a{ font-family: "Microsoft YaHei"; font-size:0.8em;
+  color:#a8d06d;}
+.forth_part{ width:100%; height:50px; /*border-top:1px solid #DDD;*/ border-bottom:1px solid #DDD; overflow:hidden; position:relative;}
+.img_forth{ position:absolute; left:2%; top:10%;}
+.img_forth img{ width:40%;}
+.border_forth{ width:28%; height:35px; border-radius:6px; border:1px solid #ff2400; position:absolute; right:2%; top:18%; text-align:center;
+line-height:30px;}
+.border_forth a{ font-family: "Microsoft YaHei"; font-size:0.8em;
+  color:#ff2400;}
+  .dialog-tu{position: absolute;z-index: 999;top: 45%; width: 80%;margin:0 10%; background: #f9dbc2; border-radius: 5px;padding-bottom: 20px;}
+.no{ background: url(../images/close.png) no-repeat;margin-bottom: 10px; width: 25px;height:25px;  background-size: 100%;float: right;margin-right: 10px;margin-top: 10px;}
+.clear{clear:both;}
+.dialog-con input{border:0 none ; background-color: #fff;border-radius: 5px;height:30px;line-height: 30px;width:80%;margin:5px 10%; padding: 0px 2%;}
+.banner{width: 100%; border-bottom:1px solid #DDD; }
+.left-1{width: 70%;float: left;}
+.left-1 span.shuzi{display: block;float: left;height:25px;line-height:25px;margin-left:10px;margin-top: 10px; margin-right: 10px;width: 25px; text-align: center; border-radius: 50%;border:1px solid #ddd;}
+.left-1 span.pic{display: block;float: left;width: 45px; height: 45px;}
+.left-1 span.pic img{max-width: 100%; border-radius: 5px;}
+.info{float:left;}
+.border_two_third{ width:28%; height:35px; border-radius:6px; border:1px solid #a8d06d; position:absolute; right:2%; top:24%; text-align:center;
+line-height:30px;}
+.border_two_third a{ font-family: "Microsoft YaHei"; font-size:0.8em;
+  color:#a8d06d;}
+.border_two_forth{ width:28%; height:35px; border-radius:6px; border:1px solid #ff7367; position:absolute; right:2%; top:24%; text-align:center;
+line-height:30px;}
+.border_two_forth a{ font-family: "Microsoft YaHei"; font-size:0.8em;
+  color:#ff7367;}
+   .dialog-con{}
+ .dialog-con span{float: left;margin-right: 10px;margin-left:5%;height: 30px;line-height: 30px; display: block;}
+  .dialog-con .phone{float: left;width:70%; background: #fff;border-radius: 5px;font-size:0.8em;padding-left: 2%;height: 30px;line-height: 30px;margin-bottom: 10px;}
+    .dialog-con .name{float: left;width: 70%; background: #fff;border-radius: 5px;font-size:0.8em;padding-left:2%;height: 30px;line-height: 30px;margin-bottom: 10px;}
+      .dialog-con .adress{float: left;width: 70%; background: #fff;font-size:0.8em;border-radius: 5px;padding-left: 2%;height: 30px;line-height: 30px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis; overflow:hidden;}

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="serviceOrder">
+   <typeAlias alias="productbean" type="com.brilliantreform.sc.product.po.Product" />
+   <typeAlias alias="order" type="com.brilliantreform.sc.order.po.Order" />
+   <typeAlias alias="servicebean" type="com.brilliantreform.sc.order.po.Order" />
+   
+   <insert id="insertOrder" parameterClass="order">
+		INSERT INTO
+		order_product
+		(order_serial, user_id, product_id, product_amount, product_price,order_price,
+		delivery_type,delivery_addr,delivery_price, product_period, pay_type,
+		order_status, comment_status,order_time, delivery_time,pay_time,community_id)
+		VALUES
+		(#order_serial#, #user_id#, #product_id#, #product_amount#, #product_price#,
+		#order_price#, #delivery_type#,#delivery_addr#,#delivery_price#,
+		#product_period#, #pay_type#, #order_status#, #comment_status#,
+		#order_time#, #delivery_time#, #pay_time#,#community_id#)
+	</insert>
+   <select id="getProductList" resultClass="productbean" parameterClass="java.util.Map">
+       select t1.*,
+			   t2.service_name as service_name,
+			   t3.communityName as communityName
+		from service_product t1,
+			 service_base t2,		
+			 community_base	t3 
+		where t2.service_id = t1.service_id 
+		      and t3.communityId = t1.community_id
+		<dynamic>
+			<isNotNull property="name" prepend="and">
+				 t1.name like '%$name$%' 
+			</isNotNull>
+			<isNotNull property="sid" prepend="and">
+				 t1.service_id = #sid#
+			</isNotNull>
+			<isNotNull property="cid" prepend="and">
+				 t1.community_id = #cid#
+			</isNotNull>
+			<isNotNull property="status" prepend="and">
+				t1.status = #status#
+			</isNotNull>
+		</dynamic>	
+   </select>
+   <select id="getService" resultClass="com.brilliantreform.sc.service.po.ServiceVo" parameterClass="java.util.Map">
+        select * from service_base where community_id=#community_id# and service_name like '%$name$%'
+   </select>
+</sqlMap>

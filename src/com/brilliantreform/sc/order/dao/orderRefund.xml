@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="orderRefund">
+
+	<typeAlias alias="orderRefund" type="com.brilliantreform.sc.order.po.OrderRefund" />
+	<typeAlias alias="orderRefundBase" type="com.brilliantreform.sc.order.po.OrderRefundBase" />
+	<typeAlias alias="orderRefundProduct" type="com.brilliantreform.sc.order.po.OrderRefundProduct" />
+
+	<insert id="saveOrderRefund" parameterClass="orderRefund">
+		INSERT INTO order_refund
+		(order_id, order_serial, refund_serial, userid, status,
+		refund_status, refund_time, refund_reason,
+		workerid, reject_reason, remark, refund_type,
+		product_id, refund_amount, product_price,
+		refund_price, community_id, create_time)
+		VALUES
+		(#order_id#, #order_serial#, #refund_serial#, #userid#, #status#,
+		#refund_status#, #refund_time#, #refund_reason#,
+		#workerid#, #reject_reason#, #remark#, #refund_type#,
+		#product_id#, #refund_amount#, #product_price#,
+		#refund_price#, #community_id#, #create_time#)
+		<selectKey resultClass="int" keyProperty="objid">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+	<update id="updateOrderRefund" parameterClass="orderRefund">
+		update order_refund
+		<dynamic prepend="set">
+			<isNotNull prepend="," property="order_id">
+				order_id = #order_id#
+			</isNotNull>
+			<isNotNull prepend="," property="order_serial">
+				order_serial = #order_serial#
+			</isNotNull>
+			<isNotNull prepend="," property="refund_serial">
+				refund_serial = #refund_serial#
+			</isNotNull>
+			<isNotNull prepend="," property="userid">
+				userid = #userid#
+			</isNotNull>
+			<isNotNull prepend="," property="status">
+				status = #status#
+			</isNotNull>
+			<isNotNull prepend="," property="refund_status">
+				refund_status = #refund_status#
+			</isNotNull>
+			<isNotNull prepend="," property="refund_time">
+				refund_time = #refund_time#
+			</isNotNull>
+			<isNotNull prepend="," property="refund_reason">
+				refund_reason = #refund_reason#
+			</isNotNull>
+			<isNotNull prepend="," property="workerid">
+				workerid = #workerid#
+			</isNotNull>
+			<isNotNull prepend="," property="reject_reason">
+				reject_reason = #reject_reason#
+			</isNotNull>
+			<isNotNull prepend="," property="remark">
+				remark = #remark#
+			</isNotNull>
+			<isNotNull prepend="," property="refund_type">
+				refund_type = #refund_type#
+			</isNotNull>
+			<isNotNull prepend="," property="product_id">
+				product_id = #product_id#
+			</isNotNull>
+			<isNotNull prepend="," property="refund_amount">
+				refund_amount = #refund_amount#
+			</isNotNull>
+			<isNotNull prepend="," property="product_price">
+				product_price = #product_price#
+			</isNotNull>
+			<isNotNull prepend="," property="refund_price">
+				refund_price = #refund_price#
+			</isNotNull>
+			<isNotNull prepend="," property="community_id">
+				community_id = #community_id#
+			</isNotNull>
+			<isNotNull prepend="," property="create_time">
+				create_time = #create_time#
+			</isNotNull>
+		</dynamic>
+		where objid = #objid#
+	</update>
+
+	<select id="findOrderRefundByOrderId" resultClass="orderRefund" parameterClass="int">
+		select t1.* from
+		order_refund t1
+		where t1.order_id = #order_id#
+	</select>
+
+	<select id="getOrderRefundById" resultClass="orderRefund" parameterClass="int">
+		select t1.* from
+		order_refund t1
+		where t1.objid = #objid#
+	</select>
+
+	<select id="getRefundAmount" resultClass="double" parameterClass="hashmap">
+		select sum(refund_amount)
+		from order_refund
+		where order_id = #order_id# and status in
+		<iterate close=")" open="(" conjunction="," property="status">
+			<![CDATA[
+                 #status[]#
+            ]]>
+		</iterate>
+		<isNotNull property="objid" prepend="and">
+			objid != #objid#
+		</isNotNull>
+	</select>
+
+    <sql id="searchRefund_sql">
+        FROM order_refund t1, user_login t2, service_product t3, community_base t4, order_base t5
+        WHERE
+        t1.product_id = t3.product_id and t1.userid = t2.userid and t1.community_id = t4.communityid and t1.order_serial = t5.order_serial
+        <dynamic>
+            <isNotEmpty property="username" prepend="and">
+                t2.username = #username#
+            </isNotEmpty>
+            <isNotEmpty property="status" prepend="and">
+                t1.status = #status#
+            </isNotEmpty>
+            <isNotEmpty property="product_name" prepend="and">
+                t3.name like '%$product_name$%'
+            </isNotEmpty>
+            <isNotEmpty property="order_serial" prepend="and">
+                t1.order_serial = #order_serial#
+            </isNotEmpty>
+            <isNotEmpty property="refund_serial" prepend="and">
+                t1.refund_serial = #refund_serial#
+            </isNotEmpty>
+            <isNotEmpty property="order_id" prepend="and">
+                t1.order_id = #order_id#
+            </isNotEmpty>
+            <isNotEmpty property="refund_status" prepend="and">
+                t1.refund_status = #refund_status#
+            </isNotEmpty>
+            <isNotEmpty prepend="and" property="start_refund_time">
+                t1.refund_time &gt;= #start_refund_time#
+            </isNotEmpty>
+            <isNotEmpty prepend="and" property="end_refund_time">
+                t1.refund_time &lt; #end_refund_time#
+            </isNotEmpty>
+            <isNotEmpty prepend="and" property="start_create_time">
+                t1.create_time &gt;= #start_create_time#
+            </isNotEmpty>
+            <isNotEmpty prepend="and" property="end_create_time">
+                t1.create_time &lt; #end_create_time#
+            </isNotEmpty>
+            <isNotEmpty prepend="and" property="start_order_time">
+                t5.order_time <![CDATA[>=]]> #start_order_time#
+            </isNotEmpty>
+            <isNotEmpty prepend="and" property="end_order_time">
+                t5.order_time <![CDATA[<]]> #end_order_time#
+            </isNotEmpty>
+            <isNotEmpty property="community_list" prepend="and">
+                t1.community_id IN
+                <iterate property="community_list" open="(" close=")" conjunction=",">
+                    #community_list[]#
+                </iterate>
+            </isNotEmpty>
+            <isEmpty property="community_list">
+                <isNotEmpty property="community_id" prepend="and">
+                    t1.community_id = #community_id#
+                </isNotEmpty>
+            </isEmpty>
+        </dynamic>
+    </sql>
+
+	<select id="searchRefund" resultClass="java.util.HashMap" parameterClass="java.util.Map">
+		SELECT
+		t1.*, t3.name as product_name, t2.loginname, t4.communityname as community_name, t5.order_time
+        <include refid="searchRefund_sql"/>
+		order by t1.create_time desc
+		limit $begin$,$size$;
+	</select>
+
+	<select id="searchRefundCount" resultClass="java.lang.Integer" parameterClass="java.util.Map">
+		SELECT count(0)
+		<include refid="searchRefund_sql"/>
+	</select>
+
+	<select id="findSellChangLogByProduct" resultClass="hashmap" parameterClass="map">
+		SELECT * FROM stock_change_log WHERE log_type = 6 AND product_id = #product_id# AND order_serial = #order_serial#
+	</select>
+
+	<select id="checkOrderAward" resultClass="int" parameterClass="int">
+		SELECT count(0) FROM user_card t1, card_info t2 where t1.card_id = t2.card_id
+		and t1.card_id BETWEEN 3 AND 5
+		and t1.awardStatus = 2 and order_id = #order_id#
+	</select>
+
+	<select id="findRefundByRefundSerial" resultClass="orderRefund" parameterClass="map">
+		SELECT * FROM order_refund where refund_serial = #refund_serial# and refund_status = #refund_status#
+	</select>
+
+	<select id="getReGoodsAmount" resultClass="double" parameterClass="String">
+		SELECT sum(refund_amount) FROM order_refund WHERE order_serial = #order_serial# AND status = 1
+	</select>
+
+	<select id="getAllReGoodsAmount" resultClass="double" parameterClass="String">
+		SELECT sum(refund_amount) FROM order_refund WHERE order_serial = #order_serial# AND status in (0,1)
+	</select>
+
+	<!-- ===============================================  以下为新版本退货代码  =============================================== -->
+
+	<select id="getOrderRefundBaseById" parameterClass="int" resultClass="orderRefundBase">
+		SELECT * FROM order_refund_base WHERE objid = #objid#
+	</select>
+
+	<insert id="insertOrderRefundBase" parameterClass="orderRefundBase">
+		INSERT INTO order_refund_base
+		(order_serial, refund_serial, userid, workerid, community_id, return_status, refund_money, refund_type, refund_status, refund_reason, return_time, refund_time, reject_time, reject_reason, remark, create_time, removetag)
+		VALUES
+		(#order_serial#, #refund_serial#, #userid#, #workerid#, #community_id#, #return_status#, #refund_money#, #refund_type#, #refund_status#, #refund_reason#, #return_time#, #refund_time#, #reject_time#, #reject_reason#, #remark#, #create_time#, #removetag#)
+		<selectKey resultClass="int" keyProperty="objid">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+	<update id="updateOrderRefundBase" parameterClass="orderRefundBase">
+		UPDATE order_refund_base SET
+		order_serial = #order_serial#,
+		refund_serial = #refund_serial#,
+		userid = #userid#,
+		workerid = #workerid#,
+		community_id = #community_id#,
+		return_status = #return_status#,
+		refund_money = #refund_money#,
+		refund_type = #refund_type#,
+		refund_status = #refund_status#,
+		refund_reason = #refund_reason#,
+		return_time = #return_time#,
+		refund_time = #refund_time#,
+		reject_time = #reject_time#,
+		reject_reason = #reject_reason#,
+		remark = #remark#,
+		create_time = #create_time#,
+		removetag = #removetag#
+		WHERE objid = #objid#
+	</update>
+	
+	<insert id="insertOrderRefundProduct" parameterClass="orderRefundProduct">
+		INSERT INTO order_refund_product
+		(refund_id, order_serial, order_id, product_id, product_price, refund_amount, refund_money)
+		VALUES
+		(#refund_id#, #order_serial#, #order_id#, #product_id#, #product_price#, #refund_amount#, #refund_money#)
+		<selectKey resultClass="int" keyProperty="objid">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+	<update id="updateOrderRefundProduct" parameterClass="orderRefundProduct">
+		UPDATE order_refund_product SET
+		refund_id = #refund_id#,
+		order_serial = #order_serial#,
+		order_id = #order_id#,
+		product_id = #product_id#,
+		product_price = #product_price#,
+		refund_amount = #refund_amount#,
+		refund_money = #refund_money#
+		WHERE objid = #objid#
+	</update>
+
+	<select id="getCanRefundProductAmount" resultClass="double" parameterClass="hashmap">
+		SELECT t3.product_amount - IFNULL(SUM(t2.refund_amount), 0)
+		FROM order_refund_base t1, order_refund_product t2, order_product t3
+		WHERE t1.objid = t2.refund_id AND t2.order_id = t3.order_id
+		AND t1.removetag = 0 AND t2.order_id = #order_id#
+		AND t1.return_status IN
+		<iterate close=")" open="(" conjunction="," property="return_status">
+			<![CDATA[ #return_status[]# ]]>
+		</iterate>
+	</select>
+
+	<select id="sumRefundAmountBySerial" resultClass="double" parameterClass="hashmap">
+		SELECT sum(t2.refund_amount)
+		FROM order_refund_base t1, order_refund_product t2
+		WHERE t1.objid = t2.refund_id
+		AND t1.removetag = 0 AND t1.order_serial = #order_serial# AND t1.return_status IN
+		<iterate close=")" open="(" conjunction="," property="return_status">
+			<![CDATA[ #return_status[]# ]]>
+		</iterate>
+	</select>
+
+	<select id="getCanRefundMoney" resultClass="double" parameterClass="string">
+		SELECT t1.order_price - IFNULL(t2.refund_money, 0) FROM order_base t1,
+		(SELECT sum(refund_money) as refund_money FROM order_refund_base WHERE removetag = 0 AND refund_status != -1 AND order_serial = #order_serial#) t2
+		WHERE t1.order_serial = #order_serial#
+	</select>
+
+	<sql id="searchOrderRefundBase_sql">
+		FROM order_refund_base t1, community_base t2, order_base t3, user_login t4
+		WHERE t1.community_id = t2.communityid AND t1.order_serial = t3.order_serial AND t1.userid = t4.userid
+		AND t1.removetag = 0
+		<isNotEmpty property="community_list" prepend="and">
+			t1.community_id IN
+			<iterate property="community_list" open="(" close=")" conjunction=",">
+				#community_list[]#
+			</iterate>
+		</isNotEmpty>
+		<isNotEmpty property="order_serial" prepend="and">
+			t1.order_serial = #order_serial#
+		</isNotEmpty>
+		<isNotEmpty property="return_status" prepend="and">
+			t1.return_status = #return_status#
+		</isNotEmpty>
+		<isNotEmpty property="refund_status" prepend="and">
+			t1.refund_status = #refund_status#
+		</isNotEmpty>
+		<isNotEmpty property="loginname" prepend="and">
+			t4.loginname = #loginname#
+		</isNotEmpty>
+		<isNotEmpty property="begin_order_time" prepend="and">
+			t3.order_time <![CDATA[>=]]> #begin_order_time#
+		</isNotEmpty>
+		<isNotEmpty property="end_order_time" prepend="and">
+			t3.order_time <![CDATA[<]]> #end_order_time#
+		</isNotEmpty>
+		<isNotEmpty property="begin_create_time" prepend="and">
+			t1.create_time <![CDATA[>=]]> #begin_create_time#
+		</isNotEmpty>
+		<isNotEmpty property="end_create_time" prepend="and">
+			t1.create_time <![CDATA[<]]> #end_create_time#
+		</isNotEmpty>
+	</sql>
+
+	<select id="searchOrderRefundBase" parameterClass="hashmap" resultClass="hashmap">
+		SELECT t1.*, t2.communityname as community_name, t4.loginname
+		<include refid="searchOrderRefundBase_sql"/>
+		ORDER BY locate(t1.refund_status, 0) desc, t1.create_time DESC
+		limit #begin#, #size#
+	</select>
+
+	<select id="searchOrderRefundBaseCount" parameterClass="hashmap" resultClass="int">
+		SELECT count(0)
+		<include refid="searchOrderRefundBase_sql"/>
+	</select>
+
+	<select id="searchOrderRefundProduct" parameterClass="hashmap" resultClass="hashmap">
+		SELECT t1.*, t2.* FROM order_refund_product t1, order_product t2
+		WHERE t1.order_id = t2.order_id
+		<isNotEmpty property="refund_id" prepend="and">
+			t1.refund_id = #refund_id#
+		</isNotEmpty>
+	</select>
+
+	<select id="getOrderRefundBaseByRefundSerial" resultClass="orderRefundBase" parameterClass="hashmap">
+		SELECT * FROM order_refund_base where refund_serial = #refund_serial# and refund_status = #refund_status#
+	</select>
+
+</sqlMap>

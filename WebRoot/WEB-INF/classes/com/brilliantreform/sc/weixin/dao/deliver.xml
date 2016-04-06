@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="deliver">
+  <typeAlias alias="weixinexpressmap" type="com.brilliantreform.sc.weixin.po.WeixinExpress" />
+  <typeAlias alias="weixinuser" type="com.brilliantreform.sc.weixin.po.WeixinUser"/>
+  <select id="isBinded" resultClass="java.lang.Integer">
+     select count(*) from wuser_phone wu
+     where wu.openid=#openid#
+  </select>
+  
+  <select id="getExpressList" parameterClass="map" resultClass="weixinexpressmap">
+		SELECT
+	ex.express_id,ex.user_phone,ex.express_no,ex.user_type,ex.community_id,ex.sign_time,ex.arrival_time
+	,dicti.name express_com
+FROM
+	service_express ex
+INNER JOIN wuser_phone wuser ON ex.user_phone = wuser.phone
+Left join dicti_value dicti on dicti.value=ex.express_com
+WHERE
+	1 = 1
+	and ex.status=1
+			<dynamic>
+			<isNotNull property="openid" prepend="and">
+				wuser.openid=#openid#
+			</isNotNull>
+			</dynamic>
+		ORDER BY
+ 			arrival_time desc	
+  </select>
+  
+  <select id="getSignExpressList" parameterClass="map" resultClass="weixinexpressmap">
+		SELECT
+	ex.express_id,ex.user_phone,ex.express_no,ex.user_type,ex.community_id,ex.sign_time,ex.arrival_time
+	,dicti.name express_com
+FROM
+	service_express ex
+INNER JOIN wuser_phone wuser ON ex.user_phone = wuser.phone
+Left join dicti_value dicti on dicti.value=ex.express_com
+WHERE
+	1 = 1
+	and ex.status=2
+			<dynamic>
+			<isNotNull property="openid" prepend="and">
+				wuser.openid=#openid#
+			</isNotNull>
+			</dynamic>
+		ORDER BY
+ 			arrival_time desc	
+  </select>
+  
+  <select id="isExistsUser" parameterClass="weixinuser" resultClass="java.lang.Integer">
+      select count(*) from weixin_users where openid=#openid#
+  </select>
+  <insert id="addWeixinUser" parameterClass="weixinuser">
+     insert into weixin_users(openid,nickname,sex,city,country,province,language,headimgurl,subscribe_time,unionid,subscribe)
+     values(#openid#,#nickname#,#sex#,#city#,#country#
+            ,#province#,#language#,#headimgurl#,#subscribe_time#,#unionid#,#subscribe#)
+  </insert>
+  <insert id="addWeixinPhone" parameterClass="weixinuser">
+     insert into wuser_phone(openid,phone)
+     values(#openid#,#phone#)
+  </insert>
+  <select id="getPhoneListById" parameterClass="map" resultClass="hashmap">
+      select * from wuser_phone where openid=#openid#
+  </select>
+  
+  <delete id="delPhone" parameterClass="map">
+     delete from wuser_phone
+     where phone=#phone#
+       and openid=#openid#
+  </delete>
+</sqlMap>

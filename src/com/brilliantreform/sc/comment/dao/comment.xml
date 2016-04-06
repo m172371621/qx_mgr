@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="comment">
+
+	<typeAlias alias="commentservcie" type="com.brilliantreform.sc.comment.po.CommentServcie" />
+	<typeAlias alias="commenttask" type="com.brilliantreform.sc.comment.po.CommentTask" />
+	
+	<insert id="insertCommentservcie" parameterClass="commentservcie">
+		INSERT INTO comment_service
+			(comment_user,comment_username,comment_type, product_id, consultation_id, comment_level, comment_dec,createTime)
+		VALUES
+			(#comment_user#,#comment_username#,#comment_type#, #product_id#, #consultation_id#, #comment_level#, #comment_dec#, now())
+	</insert>
+	
+	<insert id="insertCommenttask" parameterClass="commenttask">
+		INSERT INTO comment_task
+			(task_id, comment_dec, audio, picture, comment_user,comment_level,tig_comment,communication_comment,comment_type,createTime)
+		VALUES
+			(#task_id#, #comment_dec#, #audio#, #picture#, #comment_user#, #comment_level#, #tig_comment#, #communication_comment#, #comment_type#, now())
+	</insert>
+	
+	<select id="getCommentList" resultClass="CommentServcie" parameterClass="map">
+		select * from comment_service	  
+		where 
+		1 = 1 
+		<dynamic>
+			<isNotNull property="product_id" prepend="and">
+			product_id = #product_id#
+			</isNotNull>
+			<isNotNull property="consultation_id" prepend="and">
+			consultation_id =#consultation_id#
+			</isNotNull>
+		</dynamic>
+		limit #begin#,#size#
+	</select>
+	
+	<select id="getCommentLevel" resultClass="hashmap" parameterClass="map">
+		select avg(comment_level) as avg,count(0) as count from comment_service	  
+		where 
+		1 = 1 
+		<dynamic>
+			<isNotNull property="product_id" prepend="and">
+			product_id = #product_id#
+			</isNotNull>
+			<isNotNull property="consultation_id" prepend="and">
+			consultation_id =#consultation_id#
+			</isNotNull>
+		</dynamic>
+	</select>
+	
+	<select id="getCommentTask" resultClass="commenttask" parameterClass="map">
+		select * from comment_task	  
+		where 	
+			task_id = #task_id#
+		<dynamic>
+			<isNotNull property="comment_user" prepend="and">
+			comment_user =#comment_user#
+			</isNotNull>
+		</dynamic>
+	</select>
+	
+</sqlMap>

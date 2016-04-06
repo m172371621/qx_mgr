@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="service">
+
+	<typeAlias alias="service" type="com.brilliantreform.sc.service.po.ServiceVo" />
+	<typeAlias alias="mainAD" type="com.brilliantreform.sc.service.po.MainAD" />
+	
+	<insert id="insertService" parameterClass="service">
+		INSERT INTO service_base
+			(service_name, service_dec, service_img, community_id,service_order, service_type,parent_id,status,createTime)
+		VALUES
+			(#service_name#, #service_dec#, #service_img#, #community_id#,#service_order#, #service_type#, #parent_id#, #status#,now())
+			
+		<selectKey resultClass="int" keyProperty="service_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<update id="updateService" parameterClass="service">
+		update 
+			service_base
+		set
+		    service_id = #service_id#  
+		<dynamic>
+			<isNotNull property="service_name" prepend=",">
+				 service_name = #service_name#
+			</isNotNull>	
+			<isNotNull property="status" prepend=",">
+				 status = #status#
+			</isNotNull>	
+			<isNotNull property="service_dec" prepend=",">
+				 service_dec = #service_dec#
+			</isNotNull>	
+			<isNotNull property="service_img" prepend=",">
+				 service_img = #service_img#
+			</isNotNull>	
+			<isNotNull property="service_order" prepend=",">
+				 service_order = #service_order#
+			</isNotNull>	
+			<isNotNull property="service_type" prepend=",">	
+			  service_type = #service_type#
+			</isNotNull>	
+			<isNotNull property="parent_id" prepend=",">	
+			  parent_id = #parent_id#
+			</isNotNull>			
+		</dynamic>	
+		where 
+			service_id = #service_id#
+	</update>
+	
+	<insert id="insertAD" parameterClass="mainAD">
+		INSERT INTO service_base
+			(ad_name, ad_dec, ad_img, ad_order,ad_url,status,createTime)
+		VALUES
+			(#ad_name#, #ad_dec#, #ad_img#, #ad_order#, #ad_url#, 1, now())
+	</insert>
+	
+	<select id="getServiceList" resultClass="service" parameterClass="map">
+		select * from service_base 
+		where 1 = 1 
+		
+		<dynamic>
+			   <isNotNull property="type" prepend="and">
+	 		   		<isEqual property="type" compareValue="1" >
+						(service_type = 1 or service_type = 2)
+					</isEqual>
+					<isNotEqual property="type" compareValue="1">
+						service_type = #type#
+					</isNotEqual>				
+				</isNotNull>
+				<isNotNull property="cid" prepend="and">
+						community_id = #cid#
+				</isNotNull>
+		</dynamic>
+		
+		order by service_order
+	</select>
+	
+	<select id="getADList" parameterClass="int">
+		select * from service_ad where status = 1 order by ad_order
+	</select>
+	
+	<delete id="delService" parameterClass="int">
+		delete from service_base where service_id  = #id#
+	</delete>
+
+    <sql id="searchServiceInfo_sql">
+        FROM service_info t1, community_base t2
+        WHERE t1.community_id = t2.communityid
+        <isNotEmpty property="community_list" prepend="and">
+            t1.community_id in
+            <iterate close=")" open="(" conjunction="," property="community_list">
+                <![CDATA[ #community_list[]# ]]>
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty prepend="and" property="community_id">
+            t1.community_id = #community_id#
+        </isNotEmpty>
+        <isNotEmpty prepend="and" property="service_name">
+            t1.service_name like '%$service_name$%'
+        </isNotEmpty>
+        <isNotEmpty prepend="and" property="service_type">
+            t1.service_type = #service_type#
+        </isNotEmpty>
+        <isNotEmpty prepend="and" property="status">
+            t1.status = #status#
+        </isNotEmpty>
+    </sql>
+
+	<select id="searchServiceInfo" parameterClass="hashmap" resultClass="service">
+		SELECT t1.*, t2.communityname as community_name
+		<include refid="searchServiceInfo_sql"/>
+		ORDER BY t1.service_type ASC, t1.service_order DESC
+		limit #begin#, #size#
+	</select>
+
+	<select id="searchServiceInfoCount" parameterClass="hashmap" resultClass="int">
+		SELECT count(0)
+        <include refid="searchServiceInfo_sql"/>
+	</select>
+
+	<insert id="insertServiceInfo" parameterClass="service">
+		INSERT INTO service_info
+		(community_id, service_name, service_dec, service_img, service_title_img, service_order, service_type, service_url, status, createTime, updateTime)
+		VALUES
+		(#community_id#, #service_name#, #service_dec#, #service_img#, #service_title_img#, #service_order#, #service_type#, #service_url#, #status#, now(), now())
+	</insert>
+
+	<update id="updateServiceInfo" parameterClass="service">
+		UPDATE service_info SET
+		community_id = #community_id#, service_name = #service_name#, service_dec = #service_dec#, service_img = #service_img#, service_title_img = #service_title_img#, service_order = #service_order#,
+		service_type = #service_type#, service_url = #service_url#, status = #status#, updateTime = now()
+		WHERE service_id = #service_id#
+	</update>
+
+	<select id="getServiceInfoById" parameterClass="int" resultClass="service">
+		SELECT t1.* FROM service_info t1 WHERE t1.service_id = #service_id#
+	</select>
+
+	<delete id="removeService" parameterClass="int">
+		DELETE FROM service_info WHERE service_id = #service_id#
+	</delete>
+    
+    <select id="findProductService" parameterClass="hashmap" resultClass="service">
+        SELECT * FROM service_base
+        WHERE community_id = #community_id# AND parent_id = #parent_id#
+        ORDER BY service_order
+    </select>
+
+    <select id="findProductServiceTree" resultClass="hashmap">
+        SELECT CONCAT('s', service_id) as id,
+        CASE (IFNULL(parent_id, 0)) WHEN 0 THEN CONCAT('c', community_id) ELSE CONCAT('s', parent_id) END AS pId,
+        service_name as name,
+        community_id as cid
+        FROM service_base WHERE (service_type = 1 or service_type = 2)
+    </select>
+
+    <select id="findSecondProductService" resultClass="service" parameterClass="int">
+        select * from service_base WHERE (service_type = 1 or service_type = 2) AND community_id = #community_id# AND status = 1 order by service_order
+    </select>
+
+    <sql id="searchServiceBase_sql">
+        FROM service_base t1, community_base t2
+        WHERE t1.community_id = t2.communityid
+        <isNotEmpty property="community_list" prepend="and">
+            t1.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="service_type" prepend="and">
+            t1.service_type = #service_type#
+        </isNotEmpty>
+        <isNotEmpty property="service_name" prepend="and">
+            t1.service_name LIKE '%$service_name$%'
+        </isNotEmpty>
+        <isNotEmpty property="status" prepend="and">
+            t1.status = #status#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchServiceBase" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.communityname as community_name, (SELECT service_name FROM service_base WHERE t1.parent_id = service_id) as parent_name
+        <include refid="searchServiceBase_sql"/>
+        ORDER BY t1.community_id, t1.service_order
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchServiceBaseCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchServiceBase_sql"/>
+    </select>
+    
+    <select id="getServiceById" parameterClass="int" resultClass="service">
+        SELECT * FROM service_base WHERE service_id = #service_id#
+    </select>
+</sqlMap>

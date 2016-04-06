@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="alipaylog">
+	<typeAlias alias="aliPayLogBean"
+		type="com.brilliantreform.sc.alipay.po.AliPayLogBean" />
+	<select id="getAliPayLogList" resultClass="alipaylogbean"
+		parameterClass="java.util.Map">
+		SELECT paylog.*,op.order_price,usr.phone,qx.qxcard_pay_price from
+		alipay_finish_log paylog
+		INNER JOIN (select DISTINCT order_serial,order_price,user_id from
+		order_product where community_id= #cid#) op on paylog.out_trade_no=op.order_serial
+		INNER JOIN user_login usr ON usr.userid = op.user_id
+		INNER JOIN user_baseinfo ub on usr.userid=ub.userid
+		left JOIN (select order_serial,SUM(pay_price) qxcard_pay_price from
+		qxcard_paylog group by order_serial) qx on
+		qx.order_serial=paylog.out_trade_no
+		where 1=1
+		<isNotEmpty property="order_serial" open="and">
+			paylog.out_trade_no like CONCAT('%',#order_serial#,'%')
+          </isNotEmpty>
+		<isNotEmpty property="time_from" open="and">
+			paylog.bind_time &gt;= #time_from#
+          </isNotEmpty>
+		<isNotEmpty property="time_to" open="and">
+			paylog.bind_time &lt; #time_to#
+          </isNotEmpty>
+		<isNotEmpty property="user" open="and">
+			(usr.phone LIKE CONCAT('%',#user#,'%')
+			OR usr.loginname LIKE CONCAT('%',#user#,'%')
+			or usr.username LIKE CONCAT('%',#user#,'%')
+			or usr.nick LIKE CONCAT('%',#user#,'%'))
+          </isNotEmpty>
+		ORDER BY paylog.bind_time DESC
+		limit #begin#,#size#
+	</select>
+
+	<select id="getAliPayLogCount" resultClass="java.lang.Integer"
+		parameterClass="java.util.Map">
+		SELECT count(*)
+		from alipay_finish_log paylog
+		INNER JOIN (select DISTINCT order_serial,order_price,user_id from
+		order_product where community_id= #cid#) op on paylog.out_trade_no=op.order_serial
+		INNER JOIN user_login usr ON usr.userid = op.user_id
+		INNER JOIN user_baseinfo ub on usr.userid=ub.userid
+		left JOIN (select order_serial,SUM(pay_price) qxcard_pay_price from
+		qxcard_paylog group by order_serial) qx on
+		qx.order_serial=op.order_serial
+		where 1=1
+		<isNotEmpty property="order_serial" open="and">
+			paylog.out_trade_no like CONCAT('%',#order_serial#,'%')
+          </isNotEmpty>
+		<isNotEmpty property="time_from" open="and">
+			paylog.bind_time &gt;= #time_from#
+          </isNotEmpty>
+		<isNotEmpty property="time_to" open="and">
+			paylog.bind_time &lt; #time_to#
+          </isNotEmpty>
+		<isNotEmpty property="user" open="and">
+			(usr.phone LIKE CONCAT('%',#user#,'%')
+			OR usr.loginname LIKE CONCAT('%',#user#,'%')
+			or usr.username LIKE CONCAT('%',#user#,'%')
+			or usr.nick LIKE CONCAT('%',#user#,'%'))
+          </isNotEmpty>
+	</select>
+
+	<select id="getAliPayLogByOrderSerial" resultClass="aliPayLogBean" parameterClass="String">
+		select * from alipay_finish_log where out_trade_no = #orderSerial# AND total_fee > 0
+	</select>
+
+	<insert id="saveAlipayLog" parameterClass="hashmap">
+		INSERT INTO alipay_finish_log
+		(out_trade_no, retdata, bind_time, total_fee)
+		VALUES
+		(#out_trade_no#, #retdata#, #bind_time#, #total_fee#)
+		<selectKey resultClass="int" keyProperty="log_id">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+    <sql id="searchAlipayLog_sql">
+        from alipay_finish_log paylog
+
+        INNER JOIN
+        (select DISTINCT order_serial,order_price,user_id, community_id from order_product
+        where 1=1
+        <isNotEmpty property="community_list" prepend="and">
+            community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        ) op
+        on paylog.out_trade_no=op.order_serial
+
+        INNER JOIN community_base cb ON op.community_id = cb.communityid
+        INNER JOIN user_login usr ON usr.userid = op.user_id
+        INNER JOIN user_baseinfo ub on usr.userid=ub.userid
+        left JOIN (select order_serial,SUM(pay_price) qxcard_pay_price from
+        qxcard_paylog group by order_serial) qx on
+        qx.order_serial=paylog.out_trade_no
+        where 1=1
+        <isNotEmpty property="order_serial" open="and">
+            paylog.out_trade_no like CONCAT('%',#order_serial#,'%')
+        </isNotEmpty>
+        <isNotEmpty property="time_from" open="and">
+            paylog.bind_time &gt;= #time_from#
+        </isNotEmpty>
+        <isNotEmpty property="time_to" open="and">
+            paylog.bind_time &lt; #time_to#
+        </isNotEmpty>
+        <isNotEmpty property="user" open="and">
+            (usr.phone LIKE CONCAT('%',#user#,'%')
+            OR usr.loginname LIKE CONCAT('%',#user#,'%')
+            or usr.username LIKE CONCAT('%',#user#,'%')
+            or usr.nick LIKE CONCAT('%',#user#,'%'))
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchAlipayLog" resultClass="hashmap" parameterClass="java.util.Map">
+        SELECT paylog.*,op.order_price,usr.phone,qx.qxcard_pay_price, cb.communityname as community_name
+        <include refid="searchAlipayLog_sql"/>
+        ORDER BY paylog.bind_time DESC
+        limit #begin#,#size#
+    </select>
+
+    <select id="searchAlipayLogCount" resultClass="int" parameterClass="java.util.Map">
+        SELECT count(0)
+        <include refid="searchAlipayLog_sql"/>
+    </select>
+</sqlMap>

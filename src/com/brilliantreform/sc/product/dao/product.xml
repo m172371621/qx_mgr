@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="product">
+
+	<typeAlias alias="product" type="com.brilliantreform.sc.product.po.Product" />
+	<typeAlias alias="rule" type="com.brilliantreform.sc.product.po.ProductRule" />
+	<typeAlias alias="productSearchBean" type="com.brilliantreform.sc.product.po.ProductSearchBean" />
+
+    <sql id="searchProduct_sql">
+        from
+        service_base t2,
+        community_base	t3,
+        service_product t1
+        LEFT OUTER JOIN product_real_stock t4 ON t1.product_id = t4.product_id
+        where t2.service_id = t1.service_id
+        and t3.communityId = t1.community_id
+        AND (t2.service_type = 1 or t2.service_type = 2)
+        <dynamic>
+            <isNotEmpty property="community_list" prepend="and">
+                t1.community_id IN
+                <iterate property="community_list" open="(" close=")" conjunction=",">
+                    #community_list[]#
+                </iterate>
+            </isNotEmpty>
+            <isNotEmpty property="name" prepend="and">
+                t1.name like '%$name$%'
+            </isNotEmpty>
+            <isNotEmpty property="barcode" prepend="and">
+                t1.barcode = #barcode#
+            </isNotEmpty>
+            <isNotEmpty property="sid" prepend="and">
+                t1.service_id = #sid#
+            </isNotEmpty>
+            <isNotEmpty property="product_type" prepend="and">
+                t1.product_type = #product_type#
+            </isNotEmpty>
+            <isNotEmpty property="cid" prepend="and">
+                t1.community_id = #cid#
+            </isNotEmpty>
+            <isNotEmpty property="status" prepend="and">
+                t1.status = #status#
+            </isNotEmpty>
+            <isNotEmpty property="amount_from" prepend="and">
+                t4.real_stock_sum  <![CDATA[>=]]> #amount_from#
+            </isNotEmpty>
+            <isNotEmpty property="amount_to" prepend="and">
+                t4.real_stock_sum <![CDATA[<=]]> #amount_to#
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+
+    <select id="searchProduct" resultClass="product" parameterClass="hashmap">
+        select t1.*,
+        t2.service_name as service_name,
+        t3.communityName as communityName,
+        t4.real_stock_sum AS real_amount
+        <include refid="searchProduct_sql"/>
+        order by t1.community_id,t1.service_id,t1.createTime desc
+        limit #begin#,#size#;
+    </select>
+
+    <select id="searchProductCount" resultClass="int" parameterClass="hashmap">
+        select count(0)
+        <include refid="searchProduct_sql"/>
+    </select>
+	
+	<select id="getProductList" resultClass="product" parameterClass="productSearchBean">
+		select t1.*,
+			   t2.service_name as service_name,
+			   t3.communityName as communityName,
+			   t4.real_stock_sum AS real_amount
+		from 			
+			 service_base t2,		
+			 community_base	t3, 
+			 service_product t1
+		LEFT OUTER JOIN product_real_stock t4 ON t1.product_id = t4.product_id
+		where t2.service_id = t1.service_id 
+		      and t3.communityId = t1.community_id
+		      AND (t2.service_type = 1 or t2.service_type = 2)
+		<dynamic>
+			
+			<isNotNull property="name" prepend="and">
+				 t1.name like '%$name$%' 
+			</isNotNull>
+			<isNotNull property="barcode" prepend="and">
+				 t1.barcode = #barcode# 
+			</isNotNull>
+			<isNotNull property="sid" prepend="and">
+				 t1.service_id = #sid#
+			</isNotNull>
+			<isNotNull property="product_type" prepend="and">
+				 t1.product_type = #product_type#
+			</isNotNull>
+			<isNotNull property="cid" prepend="and">
+				 t1.community_id = #cid#
+			</isNotNull>
+			<isNotNull property="status" prepend="and">
+				t1.status = #status#
+			</isNotNull>
+			<isNotNull property="amount_from" prepend="and">
+				 t4.real_stock_sum  <![CDATA[>=]]> #amount_from# 
+			</isNotNull>
+			<isNotNull property="amount_to" prepend="and">
+				 t4.real_stock_sum <![CDATA[<=]]> #amount_to# 
+			</isNotNull>
+		</dynamic>	
+		
+		order by t1.community_id,t1.service_id,t1.createTime desc
+		
+		limit #begin#,#size#;      
+	</select>
+	
+	<select id="countProductList" resultClass="int" parameterClass="productSearchBean">
+		select count(0)
+		from 
+			 service_base t2,		
+			 community_base	t3,
+			 service_product t1
+			 LEFT OUTER JOIN product_real_stock t4 ON t1.product_id = t4.product_id
+		where t2.service_id = t1.service_id 
+		      and t3.communityId = t1.community_id
+		      AND (t2.service_type = 1 or t2.service_type = 2)
+		<dynamic>
+			<isNotNull property="name" prepend="and">
+				 t1.name like '%$name$%' 
+			</isNotNull>
+			<isNotNull property="barcode" prepend="and">
+				 t1.barcode = #barcode# 
+			</isNotNull>
+			<isNotNull property="sid" prepend="and">
+				 t1.service_id = #sid#
+			</isNotNull>
+			<isNotNull property="cid" prepend="and">
+				 t1.community_id = #cid#
+			</isNotNull>
+			<isNotNull property="status" prepend="and">
+				t1.status = #status#
+			</isNotNull>
+			<isNotNull property="amount_from" prepend="and">
+				 t4.real_stock_sum  <![CDATA[>=]]> #amount_from# 
+			</isNotNull>
+			<isNotNull property="amount_to" prepend="and">
+				 t4.real_stock_sum <![CDATA[<=]]> #amount_to# 
+			</isNotNull>
+		</dynamic>	    
+	</select>
+	
+	<update id="updateProduct" parameterClass="product">
+		update 
+			service_product
+		set
+		    product_id = #product_id#
+		<dynamic>
+			<isNotNull property="name" prepend=",">
+				name = #name#, 
+		    	price = #price#, 
+		 		service_id = #service_id#,
+		    	market_price = #market_price#,  
+		    	unit = #unit#,  
+		    	amount = 0,  
+		    	delivery_type = #delivery_type#, 
+		    	status = #status#,
+		    	rule_id =  #rule_id#,
+		    	barcode =  #barcode#,
+		    	wholesale_price = #wholesale_price#,
+				dec_tag = #dec_tag#
+			</isNotNull>
+			<isNotNull property="thumbnail" prepend=",">
+				 thumbnail = #thumbnail#
+			</isNotNull>
+			<isNotNull property="picture" prepend=",">
+				 picture = #picture#
+			</isNotNull>
+			<isNotNull property="description_pic" prepend=",">
+				 description_pic = #description_pic#
+			</isNotNull>
+			<isNotNull property="description_url" prepend=",">
+				 description_url = #description_url#
+			</isNotNull>
+			<isNotNull property="delivery_price" prepend=",">
+				 delivery_price = #delivery_price#
+			</isNotNull>	
+			<isNotNull property="product_type" prepend=",">	
+			  product_type = #product_type#
+			  </isNotNull>
+			 <isNotNull property="wholesale_price" prepend=",">
+			  wholesale_price = #wholesale_price#
+			  </isNotNull>
+			<isNotNull property="dec_tag" prepend=",">
+				dec_tag = #dec_tag#
+			</isNotNull>
+		</dynamic>	
+		where 
+			product_id = #product_id#
+	</update>
+	
+	<insert id="backupProduct" parameterClass="int">
+		insert into 
+			service_product_bak
+		select * from
+			service_product
+		where
+			product_id = #product_id#	      
+	</insert>
+	
+	<delete id="delProduct" parameterClass="int">
+		delete from
+			service_product	
+		where 
+			product_id = #product_id#	      
+	</delete>
+		
+	<select id="getProduct" resultClass="product" parameterClass="int">
+
+		select t1.*,
+			   t2.service_name as service_name,
+			   t3.communityName as communityName,
+			   t4.real_stock_sum AS real_amount
+		from 
+			 service_base t2,		
+			 community_base	t3, 
+			 service_product t1
+		LEFT OUTER JOIN product_real_stock t4 ON t1.product_id = t4.product_id
+		where t1.product_id = #product_id#
+			  and t2.service_id = t1.service_id
+			  and t3.communityId = t1.community_id      
+	</select>
+	
+	<select id="getProductByBarcode" resultClass="product" parameterClass="map">
+		select t1.*
+		from service_product t1
+		where t1.barcode = #barcode#
+			  and t1.community_id = #cid#
+		limit 1;
+		      
+	</select>
+	
+	<insert id="insertProduct" parameterClass="product">
+		INSERT INTO service_product
+			(community_id,service_id, product_type, name, picture,description_url, thumbnail,description, price,market_price, unit,tags,wholesale_price, amount, delivery_type,delivery_price, status,barcode,createTime)
+		VALUES
+			(#community_id#,#service_id#, 1, #name#, #picture#,#description_url#, #thumbnail#, #description#, #price#,#market_price#, #unit#,#tags#,#wholesale_price#, 0, #delivery_type#, #delivery_price#, #status#, #barcode#,now())
+
+		<selectKey resultClass="int" keyProperty="product_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<select id="getRuleList" resultClass="rule" parameterClass="int">
+		select t1.*,
+			   t3.communityName as communityName
+		from product_rule t1,		
+			 community_base	t3 
+		where t3.communityId = t1.community_id
+			  and t1.community_id = #id#
+		            
+	</select>
+
+    <sql id="searchRule_sql">
+        from product_rule t1, community_base	t3
+        where t3.communityId = t1.community_id
+        <isNotEmpty property="name" prepend="and">
+            t1.rule_name like '%$name$%'
+        </isNotEmpty>
+        <isNotEmpty property="community_list" prepend="and">
+            t1.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchRule" resultClass="hashmap" parameterClass="hashmap">
+        select t1.*,
+        t3.communityName as community_name
+        <include refid="searchRule_sql"/>
+        order by t1.community_id,t1.createtime desc
+        limit #begin#,#size#
+    </select>
+
+    <select id="searchRuleCount" resultClass="int" parameterClass="hashmap">
+        select count(0)
+        <include refid="searchRule_sql"/>
+    </select>
+
+	<select id="getRuleListS" resultClass="rule" parameterClass="productSearchBean">
+		select t1.*,
+			   t3.communityName as communityName
+		from product_rule t1,		
+			 community_base	t3 
+		where t3.communityId = t1.community_id
+
+		<dynamic>
+			<isNotNull property="name" prepend="and">
+				 t1.rule_name like '%$name$%' 
+			</isNotNull>
+			<isNotNull property="cid" prepend="and">
+				 t1.community_id = #cid#
+			</isNotNull>
+		</dynamic>	
+		
+		order by t1.community_id,t1.createtime desc
+		
+		limit #begin#,#size#;      	  
+		            
+	</select>
+	
+	<select id="countRuleListS" resultClass="int" parameterClass="productSearchBean">
+		select count(0)
+		from product_rule t1,		
+			 community_base	t3 
+		where t3.communityId = t1.community_id
+
+		<dynamic>
+			<isNotNull property="name" prepend="and">
+				 t1.rule_name like '%$name$%' 
+			</isNotNull>
+			<isNotNull property="cid" prepend="and">
+				 t1.community_id = #cid#
+			</isNotNull>
+		</dynamic>	
+    	             
+	</select>
+	
+	<update id="updateRule" parameterClass="rule">
+		update 
+			product_rule
+		set
+		    rule_name = #rule_name#, 
+		    rule_dec = #rule_dec#, 
+		    user_limit = #user_limit#,  
+		    amount_limit = #amount_limit#, 
+		    rule_begin_time = #rule_begin_time#,  
+		    rule_end_time = #rule_end_time#     					
+		where 
+			rule_id = #rule_id#
+	</update>
+	
+	<select id="getRule" resultClass="rule" parameterClass="int">
+		select t1.*,
+			   t3.communityName as communityName
+		from product_rule t1,		
+			 community_base	t3 
+		where t3.communityId = t1.community_id
+			  and t1.rule_id = #id#	      
+	</select>
+		
+	<insert id="insertRule" parameterClass="rule">
+		INSERT INTO product_rule
+			(community_id,rule_name, rule_type, rule_dec, user_limit,amount_limit, rule_begin_time,rule_end_time, createtime)
+		VALUES
+			(#community_id#,#rule_name#, 1, #rule_dec#, #user_limit#,#amount_limit#, #rule_begin_time#, #rule_end_time#, now())
+
+		<selectKey resultClass="int" keyProperty="rule_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<update id="updateProducts" parameterClass="map">
+		update 
+			service_product
+		set
+			updateTime=now()
+			<dynamic>
+				<isNotNull property="status" prepend=",">
+				  	 status = #status#		
+				</isNotNull>
+				<isNotNull property="sid_to" prepend=",">
+				 	 service_id = #sid_to#
+				</isNotNull>
+			</dynamic>	  		
+		where 
+			1 = 1
+			<dynamic>
+				<isNotNull property="pid" prepend="and">
+				 	product_id = #pid#
+				</isNotNull>
+				<isNotNull property="sid_from" prepend="and">
+				 	service_id = #sid_from#
+				</isNotNull>
+			</dynamic>
+	</update>
+	
+	<update id="updateAmount"  parameterClass="map">
+		update service_product 
+		set amount = amount - #sold# , sold = sold + #sold#,updatetime = updatetime		
+		where product_id = #pid#
+	</update>
+	
+	<!-- 更新营销类型 -->
+	<update id="service_product_tagsUp" parameterClass="map">
+		update service_product set tags=#old_tags2# where product_id=#product_id#
+	</update>
+
+    <insert id="insertProductV4" parameterClass="product">
+        INSERT INTO service_product
+        (service_id, i_product_id, community_id, product_type, name, picture, thumbnail, description_url, description_pic, description, dec_tag, price, market_price, unit, tags, wholesale_price, delivery_type, delivery_price, period, comment_level, status, amount, sold, rule_id, barcode, updateTime, createTime, source_product_id)
+        VALUES
+        (#service_id#, #i_product_id#, #community_id#, #product_type#, #name#, #picture#, #thumbnail#, #description_url#, #description_pic#, #description#, #dec_tag#, #price#, #market_price#, #unit#, #tags#, #wholesale_price#, #delivery_type#, #delivery_price#, #period#, #comment_level#, #status#, #amount#, #sold#, #rule_id#, #barcode#, #updateTime#, #createTime#, #source_product_id#)
+        <selectKey resultClass="int" keyProperty="product_id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateProductV4" parameterClass="product">
+        UPDATE service_product SET
+        service_id = #service_id#,
+        i_product_id = #i_product_id#,
+        community_id = #community_id#,
+        product_type = #product_type#,
+        name = #name#,
+        picture = #picture#,
+        thumbnail = #thumbnail#,
+        description_url = #description_url#,
+        description_pic = #description_pic#,
+        description = #description#,
+        dec_tag = #dec_tag#,
+        price = #price#,
+        market_price = #market_price#,
+        unit = #unit#,
+        tags = #tags#,
+        wholesale_price = #wholesale_price#,
+        delivery_type = #delivery_type#,
+        delivery_price = #delivery_price#,
+        period = #period#,
+        comment_level = #comment_level#,
+        status = #status#,
+        amount = #amount#,
+        sold = #sold#,
+        rule_id = #rule_id#,
+        barcode = #barcode#,
+        updateTime = #updateTime#,
+        createTime = #createTime#,
+        source_product_id = #source_product_id#
+        WHERE
+        product_id = #product_id#
+    </update>
+</sqlMap>

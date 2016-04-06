@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="store">
+    <typeAlias alias="store" type="com.brilliantreform.sc.store.po.Store"/>
+    <typeAlias alias="community" type="com.brilliantreform.sc.community.po.Community"/>
+    <insert id="addStore" parameterClass="store">
+        <![CDATA[
+		insert into store
+			(user_id,cache_id,country,storename,address,coordinate,phone,isdoor,delivery_range,delivery_price,door_howmuch,updoortime,worktime,isfirst_manjan,
+			manjian_price,
+			personincharge,
+			personincharge_phone)
+		values
+			(#user_id#,#cache_id#,#country#,#storename#,#address#,#coordinate#,#phone#,#isdoor#,#delivery_range#,#delivery_price#,#door_howmuch#,#updoortime#,
+			#worktime#,
+			#isfirst_manjan#,
+			#manjian_price#,
+			#personincharge#,
+			#personincharge_phone#)
+			]]>
+        <selectKey resultClass="int" keyProperty="obj">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <insert id="addCommunity" parameterClass="community">
+        INSERT INTO community_base
+        (communityName, communityAddr, communityDesc, property_tel, qx_tel, property_msg_url, qx_msg_url, propertyId,
+        STATUS, createTime, city, org_info_pid, org_info_type, org_info_level, org_info_area,
+        org_info_person, org_info_phone, org_info_location)
+        VALUES (#community_name#, #community_addr#, #community_Dec#, #property_tel#, #qx_tel#, #property_msg_url#,
+        #qx_msg_url#, #property_id#, #status#, NOW(), #city#, #org_info_pid#, #org_info_type#, #org_info_level#,
+        #org_info_area#, #org_info_person#, #org_info_phone#, #org_info_location#)
+
+        <selectKey keyProperty="community_id" resultClass="int">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+    <select id="selStore" parameterClass="map" resultClass="store">
+		select * from store where obj_id = #obj_id# and cache_id = #cache_id#
+	</select>
+
+    <update id="updateStore" parameterClass="store">
+        UPDATE store set
+        country = #country#,
+        storename = #storename#,
+        address = #address#,
+        coordinate = #coordinate#,
+        phone = #phone#,
+        isdoor = #isdoor#,
+        delivery_range = #delivery_range#,
+        delivery_price = #delivery_price#,
+        door_howmuch = #door_howmuch#,
+        updoortime = #updoortime#,
+        worktime = #worktime#,
+        isfirst_manjan = #isfirst_manjan#,
+        manjian_price = #manjian_price#,
+        personincharge = #personincharge#,
+        personincharge_phone = #personincharge_phone#
+        <isNotEmpty prepend="," property="question">
+            question = #value#
+        </isNotEmpty>
+        WHERE obj_id = #obj_id#
+    </update>
+
+    <select id="storeList" parameterClass="map" resultClass="store">
+        select * from store where 1= 1
+        <dynamic prepend="and">
+            <isNotEmpty prepend="and" property="user_id">
+                user_id = #user_id#
+            </isNotEmpty>
+            <isNotEmpty property="cache_id" prepend="and">
+                cache_id = #cache_id#
+            </isNotEmpty>
+            <!-- <isEmpty property="user_id" prepend="and">
+                 cache_id in(0,1)
+             </isEmpty>-->
+        </dynamic>
+        LIMIT #start#,#size#
+    </select>
+
+    <select id="storeListCount" parameterClass="map" resultClass="int">
+        select count(0) from store where user_id = #user_id#
+        <dynamic prepend="and">
+            <isNotEmpty property="cache_id" prepend="and">
+                cache_id = #cache_id#
+            </isNotEmpty>
+        </dynamic>
+    </select>
+
+    <select id="seachStore" parameterClass="int" resultClass="store">
+        select * from store where obj_id = #obj_id#
+    </select>
+    <!-- 更新cache_id 1为审核中 2为审核通过-->
+    <update id="updateCache_id" parameterClass="map">
+        UPDATE store SET cache_id = #cache_id# where obj_id = #obj_id#
+    </update>
+    <update id="updateStoreQuestion" parameterClass="map">
+        UPDATE store set question=#question#, cache_id= #cache_id# where obj_id = #obj_id#
+    </update>
+
+    <select id="queryChildrenId" parameterClass="int" resultClass="community">
+        SELECT
+          communityId AS community_id, communityName AS community_name, communityAddr AS community_addr, communityDesc AS community_Dec,
+          property_tel AS property_tel, qx_tel AS qx_tel, property_msg_url AS property_msg_url, qx_msg_url AS qx_msg_url, propertyId AS property_id,
+          status AS status, updateTime AS updateTime, createTime AS createTime, city AS city, org_info_pid AS org_info_pid, org_info_type AS org_info_type,
+          org_info_level AS org_info_level, org_info_area AS org_info_area, org_info_person AS org_info_person, org_info_phone AS org_info_phone,
+          org_info_location AS org_info_location
+        FROM community_base WHERE FIND_IN_SET(CAST( communityId AS CHAR), queryChildren(#cid#)) LIMIT 1
+    </select>
+</sqlMap>

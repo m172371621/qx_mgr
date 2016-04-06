@@ -1,0 +1,613 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="qxcard">
+
+	<typeAlias alias="QxCard" type="com.brilliantreform.sc.qxcard.po.QxCard" />
+	<typeAlias alias="QxCardLog" type="com.brilliantreform.sc.qxcard.po.QxCardLog" />
+	<typeAlias alias="UserQxCard" type="com.brilliantreform.sc.qxcard.po.UserQxCard" />
+	<typeAlias alias="QxCardPayLog" type="com.brilliantreform.sc.qxcard.po.QxCardPayLog" />
+	<typeAlias alias="QxcardReglog" type="com.brilliantreform.sc.qxcard.po.QxcardReglog" />
+	<typeAlias alias="QxcardCzRule" type="com.brilliantreform.sc.qxcard.po.QxCardCzRule" />
+	<typeAlias alias="QxCardCzLog" type="com.brilliantreform.sc.qxcard.po.QxCardCzLog" />
+    <typeAlias alias="QxCardCzPayLog" type="com.brilliantreform.sc.qxcard.po.QxCardCzPayLog" />
+
+	<select id="getQxCard" resultClass="QxCard" parameterClass="QxCard">
+	
+		select 
+			*
+		from 
+			qxcard_base
+		WHERE
+			`qxcard_no` = #qxcard_no#
+			
+	</select>
+	
+	<update id="updateQxCard" parameterClass="QxCard">
+		update qxcard_base
+			set qxcard_no = #qxcard_no#
+			<dynamic>
+			<isNotNull property="status" prepend=",">
+				status = #status#
+			</isNotNull>	
+			<isNotNull property="disabled" prepend=",">
+				disabled = #disabled#
+			</isNotNull>
+			<isNotNull property="expire_time" prepend=",">
+				expire_time = #expire_time:Timestamp#
+			</isNotNull>		
+			</dynamic>	
+		where 
+			qxcard_no = #qxcard_no#
+	</update>
+	
+	<insert id="insertQxCardLog" parameterClass="QxCardLog">
+		INSERT INTO qxcard_oplog
+		(
+  		 `qxcard_no`,
+  		 `qxcard_balance`,
+  		 `order_serial`,
+  		 `op_type`,
+  		 `op_price`,
+  		 `op_dec`,
+  		 `op_result`,
+  		 `op_result_dec`,
+  		 `user_type`,
+  		 `user_id`,
+  		 `user_ip`,
+  		 `createtime`
+  		 )
+		VALUES
+		(
+  		 #qxcard_no#,
+  		 #qxcard_balance#,
+  		 #order_serial#,
+  		 #op_type#,
+  		 #op_price#,
+  		 #op_dec#,
+  		 #op_result#,
+  		 #op_result_dec#,
+  		 #user_type#,
+  		 #user_id#,
+  		 #user_ip#,
+  		 now()
+  		 )
+	</insert>
+	
+	<update id="updateUserQxCard" parameterClass="UserQxCard">
+		update 
+			user_qxcard
+		set 
+			qxcard_no = #qxcard_no#
+			<dynamic>
+			<isNotNull property="qxcard_status" prepend=",">
+				`qxcard_status` = #qxcard_status#
+			</isNotNull>
+			<isNotNull property="disabled" prepend=",">
+				`disabled` = #disabled#
+			</isNotNull>
+			<isNotNull property="qxcard_balance" prepend=",">
+				`qxcard_balance` = `qxcard_balance` - #qxcard_balance#
+			</isNotNull>
+			</dynamic>
+		where 
+			qxcard_no = #qxcard_no#
+	</update>
+	
+	<insert id="insertQxcardReglog" parameterClass="QxcardReglog">
+		INSERT INTO qxcard_reglog
+		(
+  			`qxcard_no`,
+  			`cid`,
+  			`op_type`,
+  			`custm_name`,
+  			`custm_phone`,
+  			`custm_dec`,
+  			`seller_name`,
+  			`seller_ip`,
+  			`seller_dec`,
+  			`createtime`
+  		)
+		VALUES
+		(
+  			#qxcard_no#,
+  			#cid#,
+  			#op_type#,
+  			#custm_name#,
+  			#custm_phone#,
+  			#custm_dec#,
+  			#seller_name#,
+  			#seller_ip#,
+  			#seller_dec#,
+  			now()
+		)
+		<selectKey resultClass="int" keyProperty="id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	
+	
+	<update id="updateQxcardReglog" parameterClass="QxcardReglog">
+		update 
+			qxcard_reglog
+		set 
+			`id` = #id#
+			<dynamic>
+			<isNotNull property="custm_name" prepend=",">
+				custm_name = #custm_name#
+			</isNotNull>	
+			<isNotNull property="custm_phone" prepend=",">
+				custm_phone = #custm_phone#
+			</isNotNull>
+			<isNotNull property="custm_dec" prepend=",">
+				custm_dec = #custm_dec#
+			</isNotNull>
+			<isNotNull property="seller_dec" prepend=",">
+				seller_dec = #seller_dec#
+			</isNotNull>	
+			</dynamic>		
+		where 
+			`id` = #id#
+	</update>
+	
+	<select id="getQxcardReglog" resultClass="QxcardReglog" parameterClass="int" >
+		select 
+			*
+		from 
+			qxcard_reglog	
+		where 
+			`id` = #id#
+
+	</select>
+	
+	<select id="countQxcardReglog" resultClass="int" parameterClass="map" >
+		select 
+			count(0)
+		from 
+			qxcard_reglog	
+		where 
+			cid = #cid#
+			<dynamic>
+			<isNotNull property="qxcard_no" prepend="and">
+				qxcard_no like '%$qxcard_no$%'
+			</isNotNull>
+			<isNotNull property="seller_name" prepend="and">
+				seller_name like '%$seller_name$%'
+			</isNotNull>
+			<isNotNull property="op_type" prepend="and">
+				op_type = #op_type#
+			</isNotNull>							
+			<isNotNull property="time_from" prepend="and">
+				DATE_FORMAT(createtime,'%Y-%m-%d %H:%i:%s') <![CDATA[>]]>
+				#time_from#
+			</isNotNull>
+			<isNotNull property="time_to" prepend="and">
+				DATE_FORMAT(createtime,'%Y-%m-%d %H:%i:%s') <![CDATA[<]]>
+				#time_to#
+			</isNotNull>
+			</dynamic>
+	</select>
+	
+
+	
+	<select id="getQxcardReglogList" resultClass="QxcardReglog" parameterClass="map">
+		select 
+			*
+		from 
+			qxcard_reglog	
+		where 
+			cid = #cid#
+			<dynamic>
+			<isNotNull property="qxcard_no" prepend="and">
+				qxcard_no like '%$qxcard_no$%'
+			</isNotNull>
+			<isNotNull property="seller_name" prepend="and">
+				seller_name like '%$seller_name$%'
+			</isNotNull>
+			<isNotNull property="op_type" prepend="and">
+				op_type = #op_type#
+			</isNotNull>							
+			<isNotNull property="time_from" prepend="and">
+				DATE_FORMAT(createtime,'%Y-%m-%d %H:%i:%s') <![CDATA[>]]>
+				#time_from#
+			</isNotNull>
+			<isNotNull property="time_to" prepend="and">
+				DATE_FORMAT(createtime,'%Y-%m-%d %H:%i:%s') <![CDATA[<]]>
+				#time_to#
+			</isNotNull>		
+			</dynamic>
+		ORDER BY
+ 			createtime desc	
+ 		limit
+ 			#begin#,#size#	
+	</select>
+
+    <sql id="searchRegLog_sql">
+        FROM qxcard_reglog t1, qxcard_base t2, community_base t3
+        WHERE t1.qxcard_no = t2.qxcard_no AND t1.cid = t3.communityid
+        <isNotEmpty property="community_list" prepend="and">
+            t1.cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="qxcard_no" prepend="and">
+            t1.qxcard_no like '%$qxcard_no$%'
+        </isNotEmpty>
+        <isNotEmpty property="seller_name" prepend="and">
+            t1.seller_name like '%$seller_name$%'
+        </isNotEmpty>
+        <isNotEmpty property="op_type" prepend="and">
+            t1.op_type = #op_type#
+        </isNotEmpty>
+        <isNotEmpty property="time_from" prepend="and">
+            DATE_FORMAT(t1.createtime,'%Y-%m-%d %H:%i:%s') <![CDATA[>=]]> #time_from#
+        </isNotEmpty>
+        <isNotEmpty property="time_to" prepend="and">
+            DATE_FORMAT(t1.createtime,'%Y-%m-%d %H:%i:%s') <![CDATA[<]]> #time_to#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchRegLog" resultClass="hashmap" parameterClass="map">
+        select t1.*, t2.value, t3.communityname as community_name,
+		(select qxcard_balance from user_qxcard where qxcard_no = t1.qxcard_no) as qxcard_balance
+        <include refid="searchRegLog_sql"/>
+        ORDER BY t1.createtime desc
+        limit #begin#,#size#
+    </select>
+
+    <select id="searchRegLogCount" resultClass="int" parameterClass="map">
+        select count(0)
+        <include refid="searchRegLog_sql"/>
+    </select>
+
+    <sql id="searchUserQxcard_sql">
+        FROM user_qxcard uq
+        INNER JOIN user_baseinfo ub on uq.user_id=ub.userid
+        INNER JOIN user_login ul on uq.user_id=ul.userid
+        INNER JOIN community_base cb ON ub.communityId = cb.communityid
+        <dynamic prepend="where">
+            <isNotEmpty property="community_list" prepend="and">
+                ub.communityId IN
+                <iterate property="community_list" open="(" close=")" conjunction=",">
+                    #community_list[]#
+                </iterate>
+            </isNotEmpty>
+            <isNotEmpty property="qxcard_no" open="and">
+                uq.qxcard_no = #qxcard_no#
+            </isNotEmpty>
+            <isNotEmpty property="phone" open="and">
+                ul.phone = #phone#
+            </isNotEmpty>
+            <isNotEmpty property="status" open="and">
+                uq.qxcard_status = #status#
+            </isNotEmpty>
+            <isNotEmpty property="time_from" open="and">
+                uq.createtime <![CDATA[>=]]> #time_from#
+            </isNotEmpty>
+            <isNotEmpty property="time_to" open="and">
+                uq.createtime <![CDATA[<]]> #time_to#
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+
+    <select id="searchUserQxcard" parameterClass="map" resultClass="hashmap">
+        select uq.*, cb.communityname as community_name, ub.communityid as community_id
+        <include refid="searchUserQxcard_sql"/>
+        order by uq.updatetime desc
+        limit #begin#,#size#
+    </select>
+
+    <select id="searchUserQxcardCount" resultClass="int" parameterClass="hashmap">
+        SELECT count(0)
+        <include refid="searchUserQxcard_sql"/>
+    </select>
+	
+	<select id="getUserQxcard" parameterClass="map" resultClass="UserQxCard">
+	   select uq.* from user_qxcard uq
+       INNER JOIN user_baseinfo ub on uq.user_id=ub.userid
+		INNER JOIN user_login ul on uq.user_id=ul.userid
+       WHERE ub.communityId=#communityId#
+       <isNotNull property="qxcard_no" open="and">
+          uq.qxcard_no=#qxcard_no#
+       </isNotNull>
+		<isNotNull property="phone" open="and">
+			ul.phone=#phone#
+		</isNotNull>
+       <isNotNull property="status" open="and">
+          uq.qxcard_status=#status#
+       </isNotNull>
+       <isNotNull property="time_from" open="and">
+          uq.createtime &gt;=#time_from#
+       </isNotNull>
+       <isNotNull property="time_to" open="and">
+          uq.createtime &lt;=#time_to#
+       </isNotNull>
+       
+	   order by updatetime desc
+	   limit #start#,#size#
+	</select>
+	
+	<select id="getUserQxcardCount" parameterClass="map" resultClass="java.lang.Integer">
+	   select count(*) from user_qxcard uq
+       INNER JOIN user_baseinfo ub on uq.user_id=ub.userid
+		INNER JOIN user_login ul on uq.user_id=ul.userid
+       WHERE ub.communityId=#communityId#
+       <isNotNull property="qxcard_no" open="and">
+          uq.qxcard_no=#qxcard_no#
+       </isNotNull>
+		<isNotNull property="phone" open="and">
+			ul.phone=#phone#
+		</isNotNull>
+       <isNotNull property="status" open="and">
+          uq.qxcard_status=#status#
+       </isNotNull>
+       <isNotNull property="time_from" open="and">
+          uq.createtime &gt;=#time_from#
+       </isNotNull>
+       <isNotNull property="time_to" open="and">
+          uq.createtime &lt;=#time_to#
+       </isNotNull>
+	</select>
+	
+	<select id="getCardOptList" parameterClass="map" resultClass="QxCardLog">
+	    SELECT oplog.*,ul.phone FROM qxcard_oplog  oplog
+        INNER JOIN user_login ul on oplog.user_id=ul.userid
+        INNER JOIN user_baseinfo ub on oplog.user_id=ub.userid
+        WHERE ub.communityId=#community_id#
+          AND oplog.createtime BETWEEN #time_from# and #time_to#
+          <isNotNull property="qxcard_no" open="and">
+              oplog.qxcard_no LIKE CONCAT('%',#qxcard_no#,'%')
+          </isNotNull>
+          <isNotNull property="phone" open="and">
+              ul.phone LIKE CONCAT('%',#phone#,'%')
+          </isNotNull>
+          <isNotNull property="order_serial" open="and">
+              oplog.order_serial LIKE CONCAT('%',#order_serial#,'%') 
+          </isNotNull>
+          limit #start#,#size#
+	</select>
+	<select id="getCardOptCount" parameterClass="map" resultClass="java.lang.Integer">
+	    SELECT count(*) FROM qxcard_oplog  oplog
+        INNER JOIN user_login ul on oplog.user_id=ul.userid
+        INNER JOIN user_baseinfo ub on oplog.user_id=ub.userid
+        WHERE ub.communityId=#community_id#
+          AND oplog.createtime BETWEEN #time_from# and #time_to#
+          <isNotNull property="qxcard_no" open="and">
+              oplog.qxcard_no LIKE CONCAT('%',#qxcard_no#,'%')
+          </isNotNull>
+          <isNotNull property="phone" open="and">
+              ul.phone LIKE CONCAT('%',#phone#,'%')
+          </isNotNull>
+          <isNotNull property="order_serial" open="and">
+              oplog.order_serial LIKE CONCAT('%',#order_serial#,'%') 
+          </isNotNull>
+	</select>
+	
+	<delete id="deleteCard" parameterClass="String">
+	    delete from user_card where order_id = #order_serial#
+	</delete>
+	
+	<update id="update_product_batch_stock" parameterClass="map" >
+	     update product_batch_stock 
+	     set order_current_sum = order_current_sum + #order_current_sum#
+	     where 
+	     	batch_serial = #batch_serial# 
+	     	and product_id = #product_id#
+	</update>
+	
+	<select id="getQxCardByOrder" resultClass="QxCardPayLog" parameterClass="String">
+	
+		select 
+			*
+		from 
+			qxcard_paylog
+		WHERE
+ 			order_serial = #order_serial#		
+		ORDER BY
+ 			createTime desc
+ 						
+	</select>
+	
+	<update id="updateQxCardPayLog" parameterClass="QxCardPayLog">
+		update qxcard_paylog
+			set status = #status#
+		WHERE
+ 			order_serial = #order_serial#	
+	</update>
+
+	<select id="findQxcardRefund" resultClass="hashmap" parameterClass="String">
+		select qxcard_no, sum(pay_price) as pay_price
+		from qxcard_paylog
+		WHERE order_serial = #order_serial# AND status in (1, 3)
+		GROUP BY qxcard_no
+		ORDER BY createTime desc
+	</select>
+	
+	<insert id="insertQxcardPayLog" parameterClass="QxCardPayLog">
+		INSERT INTO qxcard_paylog
+		(`order_serial`, `qxcard_no`, `pay_price`, `user_id`, `status`, `createtime`)
+		VALUES
+		(#order_serial#, #qxcard_no#, #pay_price#, #user_id#, #status#, sysdate());
+
+	</insert>
+
+	<select id="getUserQxcardByNo" parameterClass="String" resultClass="UserQxCard">
+		SELECT * FROM user_qxcard WHERE qxcard_no = #qxcard_no#
+	</select>
+
+	<insert id="insertQxcardBase" parameterClass="QxCard">
+		INSERT INTO qxcard_base
+		(qxcard_no, qxcard_cdkey, status, `value`, disabled, expire_time, createtime)
+		VALUES
+		(#qxcard_no#, #qxcard_cdkey#, #status#, #value#, #disabled#, #expire_time#, #createtime#)
+	</insert>
+
+	<select id="findQxCardCzRule" parameterClass="int" resultClass="QxcardCzRule">
+		SELECT * FROM qxcard_cz_rule WHERE card_value <![CDATA[<=]]> #card_value# ORDER BY card_value DESC
+	</select>
+    
+    <select id="getQxCardCzRule" parameterClass="hashmap" resultClass="QxcardCzRule">
+        SELECT * FROM qxcard_cz_rule
+        WHERE card_value = #card_value# AND (community_id = #community_id# OR community_id IS NULL)
+        ORDER BY community_id DESC
+        limit 1
+    </select>
+
+	<select id="findRechargeCardValue" parameterClass="int" resultClass="QxcardCzRule">
+		SELECT * FROM qxcard_cz_rule WHERE community_id IS NULL OR community_id = #community_id#
+        AND NOT EXISTS (select 1 from qxcard_cz_rule where card_value in (
+            SELECT card_value FROM qxcard_cz_rule WHERE community_id IS NULL OR community_id = #community_id#
+            GROUP BY card_value HAVING count(card_value) > 1) and community_id is null)
+        ORDER BY card_value
+	</select>
+
+	<insert id="insertQxCardCzLog" parameterClass="QxCardCzLog">
+		INSERT INTO qxcard_cz_log
+		(user_id, phone, card_value, amount, cz_price, pay_price, channel, pay_type, pay_status, status, card_no, cz_serial, community_id, create_time, pay_time, cz_time, workerid, removetag)
+		VALUES
+		(#user_id#, #phone#, #card_value#, #amount#, #cz_price#, #pay_price#, #channel#, #pay_type#, #pay_status#, #status#, #card_no#, #cz_serial#, #community_id#, #create_time#, #pay_time#, #cz_time#, #workerid#, #removetag#);
+		<selectKey resultClass="int" keyProperty="objid">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+    <update id="updateQxCardCzLog" parameterClass="QxCardCzLog">
+        UPDATE qxcard_cz_log SET
+        user_id = #user_id#,
+        phone = #phone#,
+        card_value = #card_value#,
+        amount = #amount#,
+        cz_price = #cz_price#,
+        pay_price = #pay_price#,
+        channel = #channel#,
+        pay_type = #pay_type#,
+        pay_status = #pay_status#,
+        status = #status#,
+        card_no = #card_no#,
+        cz_serial = #cz_serial#,
+        community_id = #community_id#,
+        create_time = #create_time#,
+        pay_time = #pay_time#,
+        cz_time = #cz_time#,
+        workerid = #workerid#,
+        removetag = #removetag#
+        WHERE objid = #objid#
+    </update>
+
+	<insert id="insertUserQxcard" parameterClass="UserQxCard">
+		INSERT INTO user_qxcard
+		(user_id, qxcard_no, qxcard_balance, qxcard_value, qxcard_status, disabled, expire_time, updatetime, createtime)
+		VALUES
+		(#user_id#, #qxcard_no#, #qxcard_balance#, #qxcard_value#, #qxcard_status#, #disabled#, #expire_time#, #updatetime#, #createtime#)
+
+	</insert>
+
+	<update id="updateQxcardCzCardNo" parameterClass="hashmap">
+		UPDATE qxcard_cz_log set card_no = #card_no# WHERE objid = #objid#
+	</update>
+	
+	<select id="getCzAmountByCardValue" parameterClass="hashmap" resultClass="int">
+		SELECT sum(amount) FROM qxcard_cz_log WHERE user_id = #user_id# AND card_value = #card_value# AND status = 1 AND removetag = 0
+	</select>
+
+	<select id="getSumCzPriceByCid" parameterClass="int" resultClass="int">
+		SELECT sum(cz_price) FROM qxcard_cz_log WHERE status = 1 AND removetag = 0 AND community_id = #community_id#
+	</select>
+
+    <sql id="searchQxcardCzLog_sql">
+        FROM qxcard_cz_log t1, community_base t2, user_login t3
+        WHERE t1.removetag = 0 AND t1.community_id = t2.communityId AND t1.user_id = t3.userid
+        <isNotEmpty property="community_list" prepend="and">
+            t1.community_id in
+            <iterate close=")" open="(" conjunction="," property="community_list">
+                <![CDATA[ #community_list[]# ]]>
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="card_value" prepend="and">
+            t1.card_value = #card_value#
+        </isNotEmpty>
+        <isNotEmpty prepend="and" property="phone">
+            t1.phone = #phone#
+        </isNotEmpty>
+        <isNotEmpty property="start_cz_time" prepend="and">
+            t1.cz_time <![CDATA[>=]]> #start_cz_time#
+        </isNotEmpty>
+        <isNotEmpty property="start_cz_time" prepend="and">
+            t1.cz_time <![CDATA[<]]> #end_cz_time#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchQxcardCzLog" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.*, t3.*
+        <include refid="searchQxcardCzLog_sql"/>
+        ORDER BY t1.create_time DESC
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchQxcardCzLogCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchQxcardCzLog_sql"/>
+    </select>
+
+    <select id="getCzLogByCzSerial" parameterClass="string" resultClass="QxCardCzLog">
+      SELECT * FROM qxcard_cz_log WHERE cz_serial = #cz_serial#
+    </select>
+    
+    <insert id="insertQxcardCzPayLog" parameterClass="QxCardCzPayLog">
+        INSERT INTO qxcard_cz_paylog
+        (czlog_id, cz_serial, retdata, pay_time, pay_price)
+        VALUES
+        (#czlog_id#, #cz_serial#, #retdata#, #pay_time#, #pay_price#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <select id="getQxcardCzLogById" parameterClass="int" resultClass="QxCardCzLog">
+        SELECT * FROM qxcard_cz_log WHERE objid = #objid#
+    </select>
+
+    <sql id="searchOptLog_sql">
+        FROM qxcard_oplog  oplog
+        INNER JOIN user_login ul on oplog.user_id=ul.userid
+        INNER JOIN user_baseinfo ub on oplog.user_id=ub.userid
+        INNER JOIN community_base cb ON ub.communityid = cb.communityid
+        <dynamic prepend="where">
+            <isNotEmpty property="community_list" prepend="and">
+                ub.communityId IN
+                <iterate property="community_list" open="(" close=")" conjunction=",">
+                    #community_list[]#
+                </iterate>
+            </isNotEmpty>
+            <isNotEmpty property="time_from" prepend="and">
+                oplog.createtime <![CDATA[>=]]> #time_from#
+            </isNotEmpty>
+            <isNotEmpty property="time_to" prepend="and">
+                oplog.createtime <![CDATA[<]]> #time_to#
+            </isNotEmpty>
+            <isNotEmpty property="qxcard_no" open="and">
+                oplog.qxcard_no LIKE CONCAT('%',#qxcard_no#,'%')
+            </isNotEmpty>
+            <isNotEmpty property="phone" open="and">
+                ul.phone LIKE CONCAT('%',#phone#,'%')
+            </isNotEmpty>
+            <isNotEmpty property="order_serial" open="and">
+                oplog.order_serial LIKE CONCAT('%',#order_serial#,'%')
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+
+    <select id="searchOptLog" parameterClass="hashmap" resultClass="hashmap">
+        SELECT oplog.*, ul.phone, cb.communityname as community_name
+        <include refid="searchOptLog_sql"/>
+        ORDER BY oplog.createtime DESC
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchOptLogCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchOptLog_sql"/>
+    </select>
+</sqlMap>

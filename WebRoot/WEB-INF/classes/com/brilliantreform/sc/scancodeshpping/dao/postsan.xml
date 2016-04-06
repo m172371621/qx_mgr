@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="posSan">
+	<typeAlias alias="postbase" type="com.brilliantreform.sc.scancodeshpping.po.Pos_order_temp_base"/>
+	<typeAlias alias="postprodcut" type="com.brilliantreform.sc.scancodeshpping.po.Pos_order_temp_product"/>
+	
+	<select id="seachPostScanBeaseList" parameterClass="int" resultClass="postbase">
+		SELECT * FROM pos_order_temp_base WHERE community_id =  #cid# ORDER BY order_temp_base_id DESC LIMIT 1
+	</select>
+	<select id="seachPostScanproductList" parameterClass="map" resultClass="postprodcut">
+		SELECT pp.*,sp.name as product_name FROM pos_order_temp_base pb
+			INNER JOIN pos_order_temp_product pp ON pb.order_temp_base_id = pp.order_temp_base_id
+			INNER JOIN service_product sp ON sp.product_id = pp.product_id
+		WHERE pb.order_temp_base_id =
+			pp.order_temp_base_id and pb.community_id = #cid# and pb.order_temp_base_id=#pos_baseid#
+	</select>
+</sqlMap>

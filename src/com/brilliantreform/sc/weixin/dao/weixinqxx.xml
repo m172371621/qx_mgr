@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="weixinqxx">
+   <typeAlias alias="weixinproduct" type="com.brilliantreform.sc.product.po.ProductDouble"/>
+   <typeAlias alias="weixinqxx" type="com.brilliantreform.sc.weixin.po.WeixinQxx"/>
+   <typeAlias alias="weixinqxxorder" type="com.brilliantreform.sc.order.po.Order"/>
+   <select id="getProductInfo" parameterClass="java.util.Map" resultClass="weixinproduct">
+      SELECT t1.product_id,t1.name,t1.picture,t1.description_pic,t1.price,t1.market_price,prs.real_stock_sum real_amount FROM service_product t1
+      LEFT JOIN product_real_stock prs on t1.product_id=prs.product_id
+      where t1.status = 1
+		and t1.product_type = 2 
+		and t1.community_id = 3
+   </select>
+   <select id="getRecommendList" parameterClass="java.util.Map" resultClass="weixinqxx">
+      SELECT qx1.* FROM weixinqxx qx
+      INNER JOIN weixinqxx qx1 on qx1.other_recommend_code=qx.my_recommend_code AND qx1.openid!=qx.openid
+      WHERE qx.openid=#openid#
+   </select>
+   <select id="getPersonalInfo" parameterClass="java.util.Map" resultClass="weixinqxx">
+      SELECT * FROM weixinqxx
+      WHERE openid=#openid#
+   </select>
+   <insert id="insertPersonalInfo" parameterClass="weixinqxx">
+      insert into weixinqxx(openid,other_recommend_code,recommend_amount,state,nickname,img_url)
+      VALUES( #openid#,#other_recommend_code#,#recommend_amount#,#state#,#nickname#,#img_url#)
+   </insert>
+   <update id="updateRecommenCount" parameterClass="java.util.Map">
+      UPDATE weixinqxx
+      SET recommend_amount=recommend_amount+1
+      WHERE my_recommend_code=#my_recommend_code#
+   </update>
+   <update id="updatePersonalInfo" parameterClass="weixinqxx">
+      UPDATE weixinqxx
+      SET openid=#openid#
+      <isNotEqual open="," property="buy_count" compareValue="0">
+        buy_count=buy_count+1
+      </isNotEqual>
+      <isNotNull open="," property="phone">
+        phone=#phone#
+      </isNotNull>
+      <isNotNull open="," property="name">
+        name=#name#
+      </isNotNull>
+      <isNotNull open="," property="addr">
+        addr=#addr#
+      </isNotNull>
+      <isNotNull open="," property="my_recommend_code">
+        my_recommend_code=#my_recommend_code#
+      </isNotNull>
+       <isNotNull open="," property="other_recommend_code">
+        other_recommend_code=#other_recommend_code#
+      </isNotNull>
+      WHERE openid=#openid#
+   </update>
+   <insert id="insertOrderBase" parameterClass="weixinqxxorder">
+      INSERT INTO order_base(order_serial,user_id,community_id,order_price,pay_type,pay_type_ext,channel,user_ip,order_time,delivery_addr,delivery_phone)
+      VALUES(#order_serial#,#user_id#,#community_id#,#order_price#,#pay_type#,#pay_type_ext#,#channel#,#ip#,Now(),#delivery_addr#,#order_phone#)
+   </insert>
+   <insert id="insertOrderproduct" parameterClass="weixinqxxorder">
+      INSERT INTO order_product(order_serial,user_id,product_id,product_name,product_amount,product_price,order_price,delivery_addr,delivery_type,order_status,channel,community_id)
+      VALUES(#order_serial#,#user_id#,#product_id#,#product_name#,#product_amount#
+            ,#product_price#,#order_price#,#delivery_addr#,#delivery_type#
+            ,#order_status#,#channel#,#community_id#)
+   </insert>
+
+</sqlMap>

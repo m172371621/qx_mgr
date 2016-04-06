@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ad">
+
+	<typeAlias alias="mainAD" type="com.brilliantreform.sc.service.po.MainAD" />
+	<typeAlias alias="orderRefund" type="com.brilliantreform.sc.order.po.OrderRefund" />
+
+    <sql id="searchAd_sql">
+        FROM service_ad t1, community_base t2
+        WHERE t1.community_id = t2.communityid
+        <isNotEmpty property="community_list" prepend="and">
+            t1.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        <isEmpty property="community_list">
+            <isNotEmpty property="community_id" prepend="and">
+                t1.community_id = #community_id#
+            </isNotEmpty>
+        </isEmpty>
+        <isNotEmpty prepend="and" property="service_type">
+            t1.service_type = #service_type#
+        </isNotEmpty>
+        <isNotEmpty prepend="and" property="ad_name">
+            t1.ad_name like '%$ad_name$%'
+        </isNotEmpty>
+        <isNotEmpty prepend="and" property="status">
+            t1.status = #status#
+        </isNotEmpty>
+    </sql>
+
+	<select id="searchAd" parameterClass="hashmap" resultClass="hashmap">
+		SELECT t1.*, t2.communityname as community_name
+		<include refid="searchAd_sql"/>
+		order by t1.community_id, t1.service_type ASC , t1.ad_order DESC
+		limit $begin$,$size$;
+	</select>
+
+	<select id="searchAdCount" parameterClass="hashmap" resultClass="int">
+		SELECT count(0)
+		<include refid="searchAd_sql"/>
+	</select>
+
+	<insert id="insertAd" parameterClass="mainAD">
+		INSERT INTO service_ad
+		(community_id, ad_name, ad_dec, ad_img, ad_order, ad_url, service_id,
+		service_type, product_id, consultation_id, wap_url, status, createTime)
+		VALUES
+		(#community_id#, #ad_name#, #ad_dec#, #ad_img#, #ad_order#, #ad_url#, #service_id#,
+		#service_type#, #product_id#, #consultation_id#, #wap_url#, #status#, #createTime#)
+		<selectKey resultClass="int" keyProperty="ad_id">
+			SELECT
+			LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+
+	<update id="updateAd" parameterClass="mainAD">
+		UPDATE service_ad SET
+		community_id = #community_id#, ad_name = #ad_name#, ad_dec = #ad_dec#, ad_img = #ad_img#, ad_order = #ad_order#, ad_url = #ad_url#, service_id = #service_id#,
+		service_type = #service_type#, product_id = #product_id#, consultation_id = #consultation_id#, wap_url = #wap_url#, status = #status#, createTime = #createTime#
+		WHERE ad_id = #ad_id#
+	</update>
+
+	<delete id="deleteAd" parameterClass="int">
+		DELETE FROM service_ad WHERE ad_id = #ad_id#
+	</delete>
+
+	<select id="getAdById" parameterClass="int" resultClass="mainAD">
+		SELECT t1.* FROM service_ad t1 WHERE t1.ad_id = #ad_id#
+	</select>
+
+	<!-- ###################################### -->
+	<select id="findOrderRefund" resultClass="orderRefund">
+		SELECT * FROM order_refund
+	</select>
+	
+	
+</sqlMap>

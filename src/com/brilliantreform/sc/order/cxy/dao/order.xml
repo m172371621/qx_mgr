@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ordercxy">
+
+	<typeAlias alias="countOrdercxy" type="com.brilliantreform.sc.order.cxy.po.CountOrder" />
+
+
+<!-- 	<insert id="insertOrder" parameterClass="order">
+		INSERT INTO
+		order_product
+		(order_serial, user_id, product_id, product_amount, product_price,order_price,
+		delivery_type,delivery_addr,delivery_price, product_period, pay_type,
+		order_status, comment_status,order_time, delivery_time,pay_time)
+		VALUES
+		(#order_serial#, #user_id#, #product_id#, #product_amount#, #product_price#,
+		#order_price#, #delivery_type#,#delivery_addr#,#delivery_price#,
+		#product_period#, #pay_type#, #order_status#, #comment_status#,
+		#order_time#, #delivery_time#, #pay_time#)
+	</insert>
+
+	<select id="getOrderList" resultClass="order" parameterClass="map">
+		select t1.*,t2.name as product_name ,t2.picture as product_pic from
+		order_product t1,service_product t2
+		where user_id = #user_id# and
+		t1.product_id = t2.product_id
+		<dynamic>
+			<isNotNull property="month" prepend="and">
+				DATE_FORM AT(order_time,'%Y-%m') = #month#
+			</isNotNull>
+		</dynamic>
+	</select>
+
+	<select id="getOrderById" resultClass="order" parameterClass="int">
+		select t1.*,
+		t2.name as product_name ,
+		t3.loginname as user_name,
+		t3.phone as user_phone,
+		t5.communityName as c_name
+		from order_product t1,
+		service_product t2,
+		user_login t3,
+		user_baseinfo t4,
+		community_base t5
+		where
+		t1.order_id = #id#
+		and t1.product_id = t2.product_id
+		and t3.userid = t1.user_id
+		and t4.userid = t3.userid
+		and t5.communityId = t4.communityId
+
+	</select>
+
+	<select id="getOrderBySerial" resultClass="order"
+		parameterClass="string">
+		select t1.*,t2.name as product_name ,t2.picture as
+		product_pic from order_product t1,service_product t2 where
+		order_serial = #id# and t1.product_id = t2.product_id limit 1
+	</select>
+
+	mgr
+
+	<select id="searchOrderList" resultClass="order" parameterClass="searchBean">
+		select t1.*,
+		t2.name as product_name ,
+		t3.loginname as user_name,
+		t3.phone as user_phone
+		from order_product t1,
+		service_product t2,
+		user_login t3
+		where t1.product_id = t2.product_id
+		and t1.user_id = t3.userid
+		<dynamic>
+			<isNotNull property="cid" prepend="and">
+				t1.community_id = #cid#
+			</isNotNull>
+			<isNotNull property="order_serial" prepend="and">
+				t1.order_serial = #order_serial#
+			</isNotNull>
+			<isNotNull property="user_name" prepend="and">
+				t3.loginname = #user_name#
+			</isNotNull>
+			<isNotNull property="user_phone" prepend="and">
+				t3.phone = #user_phone#
+			</isNotNull>
+			<isNotNull property="product_name" prepend="and">
+				t2.name like '%$product_name$%'
+			</isNotNull>
+			<isNotNull property="sid" prepend="and">
+				t2.service_id = #sid#
+			</isNotNull>
+			<isNotNull property="order_status" prepend="and">
+				t1.order_status
+				= #order_status#
+			</isNotNull>
+			<isNotNull property="start_time" prepend="and">
+				t1.order_time <![CDATA[>]]>
+				#start_time#
+			</isNotNull>
+			<isNotNull property="end_time" prepend="and">
+				t1.order_time <![CDATA[<]]>
+				#end_time#
+			</isNotNull>
+		</dynamic>
+		order by t1.order_time desc
+		limit #begin#,#size#;
+	</select>
+
+	<select id="countOrderList" resultClass="int" parameterClass="searchBean">
+		select count(0)
+		from order_product t1,
+		service_product t2,
+		user_login t3
+		where t1.product_id = t2.product_id
+		and t1.user_id = t3.userid
+		<dynamic>
+			<isNotNull property="cid" prepend="and">
+				t1.community_id = #cid#
+			</isNotNull>
+			<isNotNull property="sid" prepend="and">
+				t2.service_id = #sid#
+			</isNotNull>
+			<isNotNull property="order_serial" prepend="and">
+				t1.order_serial = #order_serial#
+			</isNotNull>
+			<isNotNull property="user_name" prepend="and">
+				t3.loginname = #user_name#
+			</isNotNull>
+			<isNotNull property="user_phone" prepend="and">
+				t3.phone = #user_phone#
+			</isNotNull>
+			<isNotNull property="product_name" prepend="and">
+				t2.name like '%$product_name$%'
+			</isNotNull>
+			<isNotNull property="order_status" prepend="and">
+				t1.order_status
+				= #order_status#
+			</isNotNull>
+			<isNotNull property="start_time" prepend="and">
+				t1.order_time <![CDATA[>]]>
+				#start_time#
+			</isNotNull>
+			<isNotNull property="end_time" prepend="and">
+				t1.order_time <![CDATA[<]]>
+				#end_time#
+			</isNotNull>
+		</dynamic>
+	</select>
+
+	<update id="updateOrder" parameterClass="order">
+		update order_product
+		set order_id = #order_id#
+		<dynamic>
+			<isNotNull property="pay_type" prepend=",">
+				pay_type = #pay_type#
+			</isNotNull>
+			<isNotNull property="delivery_type" prepend=",">
+				delivery_type = #delivery_type#
+			</isNotNull>
+			<isNotNull property="product_amount" prepend=",">
+				product_amount = #product_amount#
+			</isNotNull>
+			<isNotNull property="product_price" prepend=",">
+				product_price = #product_price#
+			</isNotNull>
+			<isNotNull property="delivery_price" prepend=",">
+				delivery_price = #delivery_price#
+			</isNotNull>
+			<isNotNull property="order_price" prepend=",">
+				order_price = #order_price#
+			</isNotNull>
+			<isNotNull property="order_status">
+				<isEqual property="order_status" compareValue="1" prepend=",">
+					order_status = 1 , delivery_time = null , pickup_time = null
+				</isEqual>
+				<isEqual property="order_status" compareValue="2" prepend=",">
+					order_status = 2 , delivery_time = now() , pickup_time = null
+				</isEqual>
+				<isEqual property="order_status" compareValue="3" prepend=",">
+					order_status = 3 , delivery_time = now() , pickup_time = now()
+				</isEqual>
+				<isEqual property="order_status" compareValue="11" prepend=",">
+					order_status = 11, delivery_time = null
+				</isEqual>
+				<isEqual property="order_status" compareValue="12" prepend=",">
+					order_status = 12, delivery_time = now()
+				</isEqual>
+			</isNotNull>
+		</dynamic>
+		where order_id = #order_id#
+	</update>
+
+	<select id="searchProduct" resultClass="hashmap" parameterClass="map">
+		select t1.service_id as service_id,
+		t1.product_id as product_id,
+		t1.name as product_name,
+		t2.service_name as service_name
+		from service_product t1,
+		service_base t2
+		where t1.service_id = t2.service_id
+		and t1.product_type = 1
+		and t1.community_id = #cid#
+		<dynamic>
+			<isNotNull property="product_name" prepend="and">
+				t1.name like '%$product_name$%'
+			</isNotNull>
+			<isNotNull property="service_id" prepend="and">
+				t1.service_id = #service_id#
+			</isNotNull>
+			<isNotNull property="product_id" prepend="and">
+				t1.product_id = #product_id#
+			</isNotNull>
+			<isNotNull property="service_name" prepend="and">
+				t2.service_name like '%$service_name$%'
+			</isNotNull>
+		</dynamic>
+
+		order by t1.createTime desc
+		limit #begin#,#size#;
+	</select>
+ -->
+	<!-- <select id="countProduct" resultClass="int" parameterClass="map">
+		select count(0)
+		from service_product t1,
+		service_base t2
+		where t1.service_id = t2.service_id
+		and t1.product_type = 1
+		and t1.community_id = #cid#
+		<dynamic>
+			<isNotNull property="product_name" prepend="and">
+				t1.name like '%$product_name$%'
+			</isNotNull>
+			<isNotNull property="service_id" prepend="and">
+				t1.service_id = #service_id#
+			</isNotNull>
+			<isNotNull property="product_id" prepend="and">
+				t1.product_id = #product_id#
+			</isNotNull>
+			<isNotNull property="service_name" prepend="and">
+				t2.service_name like '%$service_name$%'
+			</isNotNull>
+		</dynamic>
+	</select>
+
+	<select id="countOrderByProduct" resultClass="int"
+		parameterClass="int">
+		select count(0)
+		from order_product
+		where product_id =
+		#product_id#
+		and order_status = 1
+	</select>
+
+	<update id="updateOrderByProduct" parameterClass="int">
+		update
+		order_product
+		set
+		order_status = 2 , delivery_time = now()
+		where
+		product_id = #product_id# and order_status = 1
+	</update>
+
+	<delete id="deleteOrder" parameterClass="int">
+		delete from
+		order_product
+		where
+		order_id = #id#
+	</delete>
+
+	<insert id="insertDeleteOrder" parameterClass="int">
+		insert into
+		order_product_del
+		select * from order_product where
+		order_id = #id#
+	</insert>
+
+	<update id="updateUserCard" parameterClass="int">
+		update user_card
+		set card_id = 6
+		where order_id = #order_id#
+	</update>
+
+	<select id="countNewOrder" resultClass="int">
+		select count(*)
+		from order_product
+	</select>
+
+ -->
+
+	<select id="sumOrder" parameterClass="map" resultClass="countOrdercxy">
+		<!-- SELECT op.product_id,sum(op.product_amount) amount,sum(op.product_price) 
+			price FROM order_product op where op.order_time between #start# and #end# 
+			GROUP BY op.product_id -->
+		SELECT op.product_id,sp.name product_name,
+		sum(op.product_amount) amount,ROUND(sum(op.product_price), 1) price ,sp.product_type as order_type
+		,op.community_id,sp.product_type
+		FROM order_product op
+		<![CDATA[
+		LEFT JOIN service_product sp on sp.product_id=op.product_id
+		where op.order_time >= #start# and op.order_time<= #end# and op.order_status=3
+		]]> 
+		GROUP BY op.product_id
+		HAVING op.community_id=#cid#
+		<isNotNull property="pty" prepend="and">
+			sp.product_type =#pty#
+		</isNotNull>
+	</select>
+</sqlMap>

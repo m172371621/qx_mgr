@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="express">
+
+	<typeAlias alias="Express" type="com.brilliantreform.sc.express.po.Express" />
+    <typeAlias alias="expressSend" type="com.brilliantreform.sc.express.po.ExpressSend" />
+
+	
+	<insert id="insertExpress" parameterClass="Express">
+		INSERT INTO service_express
+		(
+  			`express_com`,
+  			`user_phone`,
+  			`express_no`,
+  			`express_info`,
+  			`user_type`,
+  			`community_id`,
+  			`status`,
+  			`arrival_time`
+  		)
+		VALUES
+		(
+  			#express_com#,
+  			#user_phone#,
+  			#express_no#,
+  			#express_info#,
+  			#user_type#,
+  			#community_id#,
+  			#status#,
+  			now()
+		)
+		<selectKey resultClass="int" keyProperty="express_id">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	
+	
+	<update id="updateExpress" parameterClass="Express">
+		update 
+			service_express
+		set 
+			express_id = #express_id#
+			<dynamic>
+			<isNotNull property="status" prepend=",">
+				status = #status#,
+				sign_time = now()
+			</isNotNull>	
+			<isNotNull property="express_com" prepend=",">
+				express_com = #express_com#
+			</isNotNull>
+			<isNotNull property="express_no" prepend=",">
+				express_no = #express_no#
+			</isNotNull>
+			<isNotNull property="user_phone" prepend=",">
+				user_phone = #user_phone#
+			</isNotNull>	
+			<isNotNull property="express_info" prepend=",">
+				express_info = #express_info#
+			</isNotNull>	
+			</dynamic>		
+		where 
+			express_id = #express_id#
+	</update>
+	
+	<select id="getExpress" resultClass="Express" parameterClass="int" >
+		select 
+			*
+		from 
+			service_express	
+		where 
+			express_id = #express_id#  
+
+	</select>
+	
+	<select id="countExpress" resultClass="int" parameterClass="map" >
+		select 
+			count(0)
+		from 
+			service_express	
+		where 
+			status != 9
+			<dynamic>
+			<isNotNull property="user_phone" prepend="and">
+				user_phone like '%$user_phone$%'
+			</isNotNull>
+			<isNotNull property="express_no" prepend="and">
+				express_no like '%$express_no$%'
+			</isNotNull>
+			<isNotNull property="express_info" prepend="and">
+				express_info like '%$express_info$%'
+			</isNotNull>	
+			<isNotNull property="express_com" prepend="and">
+				express_com = #express_com#
+			</isNotNull>	
+			<isNotNull property="user_type" prepend="and">
+				user_type = #user_type#
+			</isNotNull>	
+			<isNotNull property="status" prepend="and">
+				status = #status#
+			</isNotNull>
+			<isNotNull property="community_id" prepend="and">
+				community_id = #community_id#
+			</isNotNull>	
+			<isNotNull property="time_from" prepend="and">
+				DATE_FORMAT(arrival_time,'%Y-%m-%d %H:%i:%s') <![CDATA[>]]>
+				#time_from#
+			</isNotNull>
+			<isNotNull property="time_to" prepend="and">
+				DATE_FORMAT(arrival_time,'%Y-%m-%d %H:%i:%s') <![CDATA[<]]>
+				#time_to#
+			</isNotNull>		
+			</dynamic>
+	</select>
+	
+
+	
+	<select id="getExpressList" resultClass="Express" parameterClass="map">
+		select 
+			*
+		from 
+			service_express	
+		where 
+			status != 9
+			<dynamic>
+			<isNotNull property="user_phone" prepend="and">
+				user_phone like '%$user_phone$%'
+			</isNotNull>
+			<isNotNull property="express_no" prepend="and">
+				express_no like '%$express_no$%'
+			</isNotNull>	
+			<isNotNull property="express_info" prepend="and">
+				express_info like '%$express_info$%'
+			</isNotNull>
+			<isNotNull property="express_com" prepend="and">
+				express_com = #express_com#
+			</isNotNull>	
+			<isNotNull property="user_type" prepend="and">
+				user_type = #user_type#
+			</isNotNull>	
+			<isNotNull property="status" prepend="and">
+				status = #status#
+			</isNotNull>
+			<isNotNull property="community_id" prepend="and">
+				community_id = #community_id#
+			</isNotNull>	
+			<isNotNull property="time_from" prepend="and">
+				DATE_FORMAT(arrival_time,'%Y-%m-%d %H:%i:%s') <![CDATA[>]]>
+				#time_from#
+			</isNotNull>
+			<isNotNull property="time_to" prepend="and">
+				DATE_FORMAT(arrival_time,'%Y-%m-%d %H:%i:%s') <![CDATA[<]]>
+				#time_to#
+			</isNotNull>		
+			</dynamic>
+		ORDER BY
+ 			arrival_time desc	
+ 		limit
+ 			#begin#,#size#	
+	</select>
+	<select id="selUserlogin" parameterClass="string" resultClass="int">
+		select userid from user_login where phone = #user_phone#
+	</select>
+
+    <sql id="searchExpress_sql">
+        from service_express t1, community_base t2 where t1.community_id = t2.communityid AND t1.status != 9
+        <isNotEmpty property="community_list" prepend="and">
+            t1.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="user_phone" prepend="and">
+            t1.user_phone like '%$user_phone$%'
+        </isNotEmpty>
+        <isNotEmpty property="express_no" prepend="and">
+            t1.express_no like '%$express_no$%'
+        </isNotEmpty>
+        <isNotEmpty property="express_info" prepend="and">
+            t1.express_info like '%$express_info$%'
+        </isNotEmpty>
+        <isNotEmpty property="express_com" prepend="and">
+            t1.express_com = #express_com#
+        </isNotEmpty>
+        <isNotEmpty property="user_type" prepend="and">
+            t1.user_type = #user_type#
+        </isNotEmpty>
+        <isNotEmpty property="status" prepend="and">
+            t1.status = #status#
+        </isNotEmpty>
+        <isNotEmpty property="time_from" prepend="and">
+            t1.arrival_time <![CDATA[>=]]> #time_from#
+        </isNotEmpty>
+        <isNotEmpty property="time_to" prepend="and">
+            t1.arrival_time <![CDATA[<]]> #time_to#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchExpress" resultClass="hashmap" parameterClass="hashmap">
+        select t1.*, t2.communityname as community_name
+        <include refid="searchExpress_sql"/>
+        ORDER BY t1.status, t1.community_id, t1.arrival_time desc
+        limit #begin#,#size#
+    </select>
+
+    <select id="searchExpressCount" resultClass="int" parameterClass="hashmap">
+        select count(0)
+        <include refid="searchExpress_sql"/>
+    </select>
+	
+	<insert id="insertExpressInfo" parameterClass="Express">
+        INSERT INTO service_express
+        (express_com, user_phone, express_no, express_info, user_type, community_id, status, sign_time, arrival_time)
+        VALUES
+        (#express_com#, #user_phone#, #express_no#, #express_info#, #user_type#, #community_id#, #status#, #sign_time#, #arrival_time#)
+        <selectKey resultClass="int" keyProperty="express_id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateExpressInfo" parameterClass="Express">
+        UPDATE service_express SET
+        express_id = #express_id#,
+        express_com = #express_com#,
+        user_phone = #user_phone#,
+        express_no = #express_no#,
+        express_info = #express_info#,
+        user_type = #user_type#,
+        community_id = #community_id#,
+        status = #status#,
+        sign_time = #sign_time#,
+        arrival_time = #arrival_time#
+        WHERE
+        express_id = #express_id#
+    </update>
+
+    <insert id="insertExpressSend" parameterClass="expressSend">
+        INSERT INTO service_express_send
+        (express_no, express_com, name, phone, express_price, community_id, remark, send_time, removetag)
+        VALUES
+        (#express_no#, #express_com#, #name#, #phone#, #express_price#, #community_id#, #remark#, #send_time#, #removetag#)
+        <selectKey resultClass="int" keyProperty="objid">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateExpressSend" parameterClass="expressSend">
+        UPDATE service_express_send SET
+        express_no = #express_no#,
+        express_com = #express_com#,
+        name = #name#,
+        phone = #phone#,
+        express_price = #express_price#,
+        community_id = #community_id#,
+        remark = #remark#,
+        send_time = #send_time#,
+        removetag = #removetag#
+        WHERE objid = #objid#
+    </update>
+
+    <sql id="searchExpressSend_sql">
+        FROM service_express_send t1, community_base t2
+        WHERE t1.community_id = t2.communityid AND t1.removetag = 0
+        <isNotEmpty property="community_list" prepend="and">
+            t1.community_id IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="name" prepend="and">
+            t1.name LIKE CONCAT('%',#name#,'%')
+        </isNotEmpty>
+        <isNotEmpty property="phone" prepend="and">
+            t1.phone = #phone#
+        </isNotEmpty>
+        <isNotEmpty property="express_no" prepend="and">
+            t1.express_no LIKE CONCAT('%',#express_no#,'%')
+        </isNotEmpty>
+        <isNotEmpty property="express_com" prepend="and">
+            t1.express_com = #express_com#
+        </isNotEmpty>
+        <isNotEmpty property="time_from" prepend="and">
+            t1.send_time <![CDATA[>=]]> #time_from#
+        </isNotEmpty>
+        <isNotEmpty property="time_to" prepend="and">
+            t1.send_time <![CDATA[<]]> #time_to#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchExpressSend" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.communityname as community_name
+        <include refid="searchExpressSend_sql"/>
+        ORDER BY t1.send_time DESC
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchExpressSendCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchExpressSend_sql"/>
+    </select>
+
+    <select id="getExpressSendById" parameterClass="int" resultClass="expressSend">
+        SELECT * FROM service_express_send WHERE objid = #objid#
+    </select>
+
+    <update id="removeExpressSend" parameterClass="int">
+        UPDATE service_express_send SET removetag = 1 WHERE objid = #objid#
+    </update>
+</sqlMap>

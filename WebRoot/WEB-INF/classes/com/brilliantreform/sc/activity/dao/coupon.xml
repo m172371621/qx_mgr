@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="coupon">
+    <typeAlias alias="couponInfo" type="com.brilliantreform.sc.activity.po.CouponInfo" />
+    <typeAlias alias="couponCode" type="com.brilliantreform.sc.activity.po.CouponCode" />
+    <typeAlias alias="couponGroup" type="com.brilliantreform.sc.activity.po.CouponGroup" />
+    <typeAlias alias="couponUnion" type="com.brilliantreform.sc.activity.po.CouponUnion" />
+    <typeAlias alias="userCoupon" type="com.brilliantreform.sc.activity.po.UserCoupon" />
+
+    <select id="getRandomCouponInfo" parameterClass="int" resultClass="couponInfo">
+        SELECT * FROM coupon_info WHERE removetag = 0
+        <isNotEmpty property="cid" prepend="and">
+            cid = #cid#
+        </isNotEmpty>
+        order by rand() limit 1
+    </select>
+
+    <insert id="insertCouponCode" parameterClass="couponCode">
+        INSERT INTO coupon_code
+        (randomcode, coupon_id, expiretime, status, amount)
+        VALUES
+        (#randomcode#, #coupon_id#, #expiretime#, #status#, #amount#)
+    </insert>
+
+    <update id="updateCouponCode" parameterClass="couponCode">
+        UPDATE coupon_code SET
+        coupon_id = #coupon_id#,
+        expiretime = #expiretime#,
+        status = #status#,
+        amount = #amount#
+        WHERE randomcode = #randomcode#
+    </update>
+
+    <select id="searchCouponInfo" parameterClass="hashmap" resultClass="hashmap">
+        SELECT * FROM coupon_info WHERE removetag = 0
+        ORDER BY createtime DESC
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchCouponInfoCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0) FROM coupon_info WHERE removetag = 0
+    </select>
+
+    <insert id="insertCouponInfo" parameterClass="couponInfo">
+        INSERT INTO coupon_info
+        (off_price, use_price, cid, expire_date, createtime, removetag)
+        VALUES
+        (#off_price#, #use_price#, #cid#, #expire_date#, #createtime#, #removetag#)
+        <selectKey resultClass="int" keyProperty="coupon_id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="updateCouponInfo" parameterClass="couponInfo">
+        UPDATE coupon_info SET
+        off_price = #off_price#,
+        use_price = #use_price#,
+        cid = #cid#,
+        expire_date = #expire_date#,
+        createtime = #createtime#,
+        removetag = #removetag#
+        WHERE coupon_id = #coupon_id#
+    </update>
+
+    <select id="getCouponInfoById" parameterClass="int" resultClass="couponInfo">
+        SELECT * FROM coupon_info WHERE coupon_id = #coupon_id#
+    </select>
+
+    <update id="removeCouponInfo" parameterClass="int">
+        UPDATE coupon_info SET removetag = 1 WHERE coupon_id = #coupon_id#
+    </update>
+
+    <sql id="searchUserCoupon_sql">
+        FROM user_coupon t1, user_login t2
+        WHERE t1.user_id = t2.userid
+        <isNotEmpty property="status" prepend="and">
+            t1.status = #status#
+        </isNotEmpty>
+        <isNotEmpty property="loginname" prepend="and">
+            t2.loginname = #loginname#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchUserCoupon" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.*
+        <include refid="searchUserCoupon_sql"/>
+        ORDER BY t1.createtime DESC
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchUserCouponCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchUserCoupon_sql"/>
+    </select>
+
+    <update id="updateUserCouponStatus" parameterClass="hashmap">
+        UPDATE user_coupon SET status = #status# WHERE coupon_id = #coupon_id#
+    </update>
+
+    <sql id="searchCouponGroup_sql">
+        FROM coupon_group t1
+        LEFT JOIN community_base t2 ON t1.cid = t2.communityid
+        WHERE 1=1
+        <isNotEmpty property="community_list" prepend="and">
+            t1.cid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="name" prepend="and">
+            t1.name LIKE CONTACT('%', #name#, '%')
+        </isNotEmpty>
+        <isNotEmpty property="status" prepend="and">
+            t1.status = #status#
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchCouponGroup" parameterClass="hashmap" resultClass="hashmap">
+        SELECT t1.*, t2.communityname as community_name
+        <include refid="searchCouponGroup_sql"/>
+        ORDER BY t1.status, t1.expiretime DESC, t1.cid, t1.name
+        limit #begin#, #size#
+    </select>
+
+    <select id="searchCouponGroupCount" parameterClass="hashmap" resultClass="int">
+        SELECT count(0)
+        <include refid="searchCouponGroup_sql"/>
+    </select>
+
+    <select id="getCouponGroupById" parameterClass="string" resultClass="couponGroup">
+        SELECT * FROM coupon_group WHERE group_id = #group_id#
+    </select>
+
+    <select id="findCouponUnion" parameterClass="string" resultClass="hashmap">
+        SELECT t1.*, t2.* FROM coupon_union t1, coupon_info t2 WHERE t1.coupon_id = t2.coupon_id AND t2.removetag = 0 AND t1.group_id = #group_id#
+    </select>
+
+    <insert id="insertCouponGroup" parameterClass="couponGroup">
+        INSERT INTO coupon_group
+        (group_id, name, expiretime, status, cid)
+        VALUES
+        (#group_id#, #name#, #expiretime#, #status#, #cid#)
+    </insert>
+
+    <update id="updateCouponGroup" parameterClass="couponGroup">
+        UPDATE coupon_group SET
+        name = #name#,
+        expiretime = #expiretime#,
+        status = #status#,
+        cid = #cid#
+        WHERE group_id = #group_id#
+    </update>
+
+    <delete id="removeCouponUnionByGroup" parameterClass="string">
+        DELETE FROM coupon_union WHERE group_id = #group_id#
+    </delete>
+    
+    <insert id="insertCouponUnion" parameterClass="couponUnion">
+        INSERT INTO coupon_union
+        (group_id, coupon_id, amount)
+        VALUES
+        (#group_id#, #coupon_id#, #amount#)
+    </insert>
+
+    <select id="getUserCouponById" parameterClass="int" resultClass="userCoupon">
+        SELECT * FROM user_coupon WHERE coupon_id = #coupon_id#
+    </select>
+    
+</sqlMap>

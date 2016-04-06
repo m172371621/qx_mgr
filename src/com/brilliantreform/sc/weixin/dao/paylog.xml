@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="paylog">
+    <typeAlias alias="weixinpaylogbean" type="com.brilliantreform.sc.weixin.po.WeixinPayLogBean"/>
+    <select id="getWeixinPayLogList" resultClass="weixinpaylogbean" parameterClass="java.util.Map">
+        SELECT paylog.*,op.order_price,usr.phone,qx.qxcard_pay_price from weixinpay_log paylog
+        INNER JOIN (select DISTINCT order_serial,order_price,user_id from order_product) op on paylog.out_trade_no=op.order_serial
+        INNER JOIN user_login usr ON usr.userid = op.user_id
+        INNER JOIN user_baseinfo ub on usr.userid=ub.userid
+        left JOIN (select order_serial,SUM(pay_price) qxcard_pay_price from qxcard_paylog group by order_serial) qx on qx.order_serial=paylog.out_trade_no
+        where ub.communityId=#cid#
+          <isNotEmpty property="order_serial" open="and">
+              paylog.out_trade_no like CONCAT('%',#order_serial#,'%')
+          </isNotEmpty>
+          <isNotEmpty property="time_from" open="and">
+              paylog.bind_time &gt;= #time_from#
+          </isNotEmpty>
+          <isNotEmpty property="time_to" open="and">
+              paylog.bind_time &lt; #time_to#
+          </isNotEmpty>
+          <isNotEmpty property="user" open="and">
+              (usr.phone LIKE CONCAT('%',#user#,'%')
+                    OR usr.loginname LIKE CONCAT('%',#user#,'%')
+                     or usr.username LIKE CONCAT('%',#user#,'%')
+                     or usr.nick LIKE CONCAT('%',#user#,'%'))
+          </isNotEmpty>
+        ORDER BY paylog.bind_time DESC
+          limit #begin#,#size#
+    </select>
+    <select id="getWeixinPayLogCount" resultClass="java.lang.Integer" parameterClass="java.util.Map">
+        SELECT count(*) from weixinpay_log paylog
+        INNER JOIN (select DISTINCT order_serial,order_price,user_id from order_product) op on paylog.out_trade_no=op.order_serial
+        INNER JOIN user_login usr ON usr.userid = op.user_id
+        INNER JOIN user_baseinfo ub on usr.userid=ub.userid
+        where ub.communityId=#cid#
+          <isNotEmpty property="order_serial" open="and">
+              paylog.out_trade_no like CONCAT('%',#order_serial#,'%')
+          </isNotEmpty>
+          <isNotEmpty property="time_from" open="and">
+              paylog.bind_time &gt;= #time_from#
+          </isNotEmpty>
+          <isNotEmpty property="time_to" open="and">
+              paylog.bind_time &lt; #time_to#
+          </isNotEmpty>
+          <isNotEmpty property="user" open="and">
+              (usr.phone LIKE CONCAT('%',#user#,'%')
+                    OR usr.loginname LIKE CONCAT('%',#user#,'%')
+                     or usr.username LIKE CONCAT('%',#user#,'%')
+                     or usr.nick LIKE CONCAT('%',#user#,'%'))
+          </isNotEmpty>
+    </select>
+    
+    <select id="getAliPayLogList" resultClass="weixinpaylogbean" parameterClass="java.util.Map">
+        SELECT   paylog.out_trade_no,paylog.str retdata,paylog.createtime bind_time 
+                ,op.order_price,usr.phone,qx.qxcard_pay_price
+        from alipay_log paylog
+        INNER JOIN (select DISTINCT order_serial,order_price,user_id from order_product) op on paylog.out_trade_no=op.order_serial
+        INNER JOIN user_login usr ON usr.userid = op.user_id
+        INNER JOIN user_baseinfo ub on usr.userid=ub.userid
+        left JOIN (select order_serial,SUM(pay_price) qxcard_pay_price from qxcard_paylog group by order_serial) qx on qx.order_serial=op.order_serial
+        where ub.communityId=#cid# 
+          <isNotNull property="order_serial" open="and">
+              paylog.out_trade_no like CONCAT('%',#order_serial#,'%')
+          </isNotNull>
+          <isNotNull property="time_from" open="and">
+              paylog.createtime &gt;= #time_from#
+          </isNotNull>
+          <isNotNull property="time_to" open="and">
+              paylog.createtime &lt;= #time_to#
+          </isNotNull>
+          <isNotNull property="user" open="and">
+              (usr.phone LIKE CONCAT('%',#user#,'%')
+                    OR usr.loginname LIKE CONCAT('%',#user#,'%')
+                     or usr.username LIKE CONCAT('%',#user#,'%')
+                     or usr.nick LIKE CONCAT('%',#user#,'%'))
+          </isNotNull>
+          limit #start#,#size#
+    </select>
+    <select id="getAliPayLogCount" resultClass="java.lang.Integer" parameterClass="java.util.Map">
+        SELECT   count(*)
+        from alipay_log paylog
+        INNER JOIN (select DISTINCT order_serial,order_price,user_id from order_product) op on paylog.out_trade_no=op.order_serial
+        INNER JOIN user_login usr ON usr.userid = op.user_id
+        INNER JOIN user_baseinfo ub on usr.userid=ub.userid
+        left JOIN (select order_serial,SUM(pay_price) qxcard_pay_price from qxcard_paylog group by order_serial) qx on qx.order_serial=op.order_serial
+        where ub.communityId=#cid# 
+          <isNotNull property="order_serial" open="and">
+              paylog.out_trade_no like CONCAT('%',#order_serial#,'%')
+          </isNotNull>
+          <isNotNull property="time_from" open="and">
+              paylog.createtime &gt;= #time_from#
+          </isNotNull>
+          <isNotNull property="time_to" open="and">
+              paylog.createtime &lt;= #time_to#
+          </isNotNull>
+          <isNotNull property="user" open="and">
+              (usr.phone LIKE CONCAT('%',#user#,'%')
+                    OR usr.loginname LIKE CONCAT('%',#user#,'%')
+                     or usr.username LIKE CONCAT('%',#user#,'%')
+                     or usr.nick LIKE CONCAT('%',#user#,'%'))
+          </isNotNull>
+    </select>
+    
+    <select id="getWxpaylogByNo" resultClass="hashmap" parameterClass="String">
+        SELECT * FROM weixinpay_log WHERE out_trade_no = #order_serial# AND total_fee > 0
+    </select>
+
+    <insert id="saveWXpayLog" parameterClass="hashmap">
+        INSERT INTO weixinpay_log
+        (out_trade_no, retdata, bind_time, total_fee)
+        VALUES
+        (#out_trade_no#, #retdata#, #bind_time#, #total_fee#)
+        <selectKey resultClass="int" keyProperty="log_id">
+            SELECT
+            LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <sql id="searchWxPayLog_sql">
+        from weixinpay_log paylog
+        INNER JOIN (select DISTINCT order_serial,order_price,user_id from order_product) op on paylog.out_trade_no=op.order_serial
+        INNER JOIN user_login usr ON usr.userid = op.user_id
+        INNER JOIN user_baseinfo ub on usr.userid=ub.userid
+        INNER JOIN community_base cb ON ub.communityId = cb.communityid
+        left JOIN (select order_serial,SUM(pay_price) qxcard_pay_price from qxcard_paylog group by order_serial) qx on qx.order_serial=paylog.out_trade_no
+        where 1=1
+        <isNotEmpty property="community_list" prepend="and">
+            ub.communityid IN
+            <iterate property="community_list" open="(" close=")" conjunction=",">
+                #community_list[]#
+            </iterate>
+        </isNotEmpty>
+        <isNotEmpty property="order_serial" open="and">
+            paylog.out_trade_no like CONCAT('%',#order_serial#,'%')
+        </isNotEmpty>
+        <isNotEmpty property="time_from" open="and">
+            paylog.bind_time &gt;= #time_from#
+        </isNotEmpty>
+        <isNotEmpty property="time_to" open="and">
+            paylog.bind_time &lt; #time_to#
+        </isNotEmpty>
+        <isNotEmpty property="user" open="and">
+            (usr.phone LIKE CONCAT('%',#user#,'%')
+            OR usr.loginname LIKE CONCAT('%',#user#,'%')
+            or usr.username LIKE CONCAT('%',#user#,'%')
+            or usr.nick LIKE CONCAT('%',#user#,'%'))
+        </isNotEmpty>
+    </sql>
+
+    <select id="searchWxPayLog" resultClass="hashmap" parameterClass="java.util.Map">
+        SELECT paylog.*,op.order_price,usr.phone,qx.qxcard_pay_price, cb.communityname as community_name
+        <include refid="searchWxPayLog_sql"/>
+        ORDER BY paylog.bind_time DESC
+        limit #begin#,#size#
+    </select>
+
+    <select id="searchWxPayLogCount" resultClass="int" parameterClass="java.util.Map">
+        SELECT count(0)
+        <include refid="searchWxPayLog_sql"/>
+    </select>
+</sqlMap>
